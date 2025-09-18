@@ -1,7 +1,7 @@
-import { AccessControlDemo } from "@/components/AccessControlDemo";
+import { OPAEditor } from "@/components/OPAEditor";
 
 const Index = () => {
-  return <AccessControlDemo />;
+  return <OPAEditor />;
 };
 
 export default Index;
