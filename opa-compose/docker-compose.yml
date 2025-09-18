@@ -1,0 +1,16 @@
+networks:
+  default:
+    name: docker-default-network
+    external: true
+
+services:
+  opa:
+   build: ./opa # Dockerfile local dir
+   hostname: opa
+
+  cors:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8181:80"
