@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Play, Pause, Shield, Users, Database, GitBranch, Activity, Lock, Unlock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronLeft, ChevronRight, Play, Pause, Shield, Users, Database, GitBranch, Activity, Lock, Unlock, Code } from "lucide-react";
+import { OPAEditor } from "./OPAEditor";
 
 // Mock data for the demonstration
 const mockSources = [
@@ -292,59 +294,76 @@ export const AccessControlDemo = () => {
 
   return (
     <div className="min-h-screen bg-gradient-dashboard">
-      {/* Navigation Header */}
+      {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-bold">Access Control Demo</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                {slides.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      currentSlide === index ? 'bg-primary' : 'bg-muted'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={prevSlide}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              </Button>
-              <Button variant="outline" size="sm" onClick={nextSlide}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <Shield className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold">Access Control System Demo</h1>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-muted-foreground">
-              {currentSlide + 1}. {slides[currentSlide].title}
-            </h2>
-          </div>
+      <div className="container mx-auto px-6 py-8">
+        <Tabs defaultValue="demo" className="max-w-7xl mx-auto">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="demo" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              System Demo
+            </TabsTrigger>
+            <TabsTrigger value="rule-designer" className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              Rule Designer
+            </TabsTrigger>
+          </TabsList>
           
-          <div key={currentSlide} className="min-h-[600px]">
-            <CurrentSlideComponent />
-          </div>
-        </div>
+          <TabsContent value="demo" className="space-y-6">
+            {/* Slide Navigation */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-semibold text-muted-foreground">
+                  {currentSlide + 1}. {slides[currentSlide].title}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {slides.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        currentSlide === index ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={prevSlide}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                >
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+                <Button variant="outline" size="sm" onClick={nextSlide}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Slide Content */}
+            <div key={currentSlide} className="min-h-[600px]">
+              <CurrentSlideComponent />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="rule-designer">
+            <OPAEditor />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
