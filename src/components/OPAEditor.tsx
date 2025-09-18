@@ -1,299 +1,424 @@
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Code, Play, FileText, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle, CheckCircle, Code, FileText, Play, XCircle } from "lucide-react";
+import { useState } from "react";
+const exampleData = {
+
+};
 
 const policyTemplates = {
-  "basic-rbac": `package authz
+    "basic-rbac": `
+package app.abac
 
-default allow = false
+default allow := false
 
-allow {
-    user_has_role[role]
-    role_permissions[role][_] == input.action
+allow if user_is_owner
+
+allow if {
+	user_is_employee
+	action_is_read
 }
 
-user_has_role[role] {
-    role := input.user.roles[_]
+allow if {
+	user_is_employee
+	user_is_senior
+	action_is_update
 }
 
-role_permissions := {
-    "admin": ["read", "write", "delete"],
-    "editor": ["read", "write"],
-    "viewer": ["read"]
-}`,
-  
-  "time-based": `package authz
-
-default allow = false
-
-allow {
-    input.user.role == "employee"
-    is_business_hours
+allow if {
+	user_is_customer
+	action_is_read
+	not pet_is_adopted
 }
 
-is_business_hours {
-    hour := time.clock(time.now_ns())[0]
-    hour >= 9
-    hour < 17
-}`,
+user_is_owner if data.user_attributes[input.user].title == "owner"
 
-  "resource-owner": `package authz
+user_is_employee if data.user_attributes[input.user].title == "employee"
 
-default allow = false
+user_is_customer if data.user_attributes[input.user].title == "customer"
 
-allow {
-    input.user.id == input.resource.owner
-}
+user_is_senior if data.user_attributes[input.user].tenure > 8
 
-allow {
-    input.user.role == "admin"
-}
+action_is_read if input.action == "read"
 
-allow {
-    input.user.department == input.resource.department
-    input.action == "read"
-}`
+action_is_update if input.action == "update"
+
+pet_is_adopted if data.pet_attributes[input.resource].adopted == true
+`
 };
 
 const testScenarios = {
-  "admin-access": {
-    input: {
-      user: { id: "u1", role: "admin", roles: ["admin"] },
-      action: "delete",
-      resource: { id: "r1", owner: "u2" }
+    "admin-access": {
+        input: {
+
+
+            user_attributes: {
+                alice: {
+                    tenure: 20,
+                    title: "owner"
+                },
+                bob: {
+                    tenure: 15,
+                    title: "employee"
+                },
+                eve: {
+                    tenure: 5,
+                    title: "employee"
+                },
+                dave: {
+                    tenure: 5,
+                    title: "customer"
+                }
+            },
+            pet_attributes: {
+                dog123: {
+                    adopted: true,
+                    age: 2,
+                    breed: "terrier",
+                    name: "toto"
+                },
+                dog456: {
+                    adopted: false,
+                    age: 3,
+                    breed: "german-shepherd",
+                    name: "rintintin"
+                },
+                dog789: {
+                    adopted: false,
+                    age: 2,
+                    breed: "collie",
+                    name: "lassie"
+                },
+                cat123: {
+                    adopted: false,
+                    age: 1,
+                    breed: "fictitious",
+                    name: "cheshire"
+                }
+            }
+
+        }
+    },
+    "editor-access": {
+        input: {
+            user: { id: "u2", role: "editor", roles: ["editor"] },
+            action: "write",
+            resource: { id: "r1", owner: "u1" }
+        }
+    },
+    "viewer-access": {
+        input: {
+            user: { id: "u3", role: "viewer", roles: ["viewer"] },
+            action: "delete",
+            resource: { id: "r1", owner: "u1" }
+        }
     }
-  },
-  "editor-access": {
-    input: {
-      user: { id: "u2", role: "editor", roles: ["editor"] },
-      action: "write",
-      resource: { id: "r1", owner: "u1" }
-    }
-  },
-  "viewer-access": {
-    input: {
-      user: { id: "u3", role: "viewer", roles: ["viewer"] },
-      action: "delete",
-      resource: { id: "r1", owner: "u1" }
-    }
-  }
 };
 
 interface EvaluationResult {
-  allow: boolean;
-  errors?: string[];
-  duration?: string;
+    allow: boolean;
+    errors?: string[];
+    duration?: string;
 }
 
 export const OPAEditor = () => {
-  const [policy, setPolicy] = useState(policyTemplates["basic-rbac"]);
-  const [selectedTemplate, setSelectedTemplate] = useState("basic-rbac");
-  const [testInput, setTestInput] = useState(JSON.stringify(testScenarios["admin-access"].input, null, 2));
-  const [selectedScenario, setSelectedScenario] = useState("admin-access");
-  const [result, setResult] = useState<EvaluationResult | null>(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
+    const [policy, setPolicy] = useState(policyTemplates["basic-rbac"]);
+    const [selectedTemplate, setSelectedTemplate] = useState("basic-rbac");
+    const [testInput, setTestInput] = useState(JSON.stringify(testScenarios["admin-access"].input, null, 2));
+    const [selectedScenario, setSelectedScenario] = useState("admin-access");
+    const [result, setResult] = useState<EvaluationResult | null>(null);
+    const [isEvaluating, setIsEvaluating] = useState(false);
 
-  const handleTemplateChange = (template: string) => {
-    setSelectedTemplate(template);
-    setPolicy(policyTemplates[template as keyof typeof policyTemplates]);
-  };
+    const handleTemplateChange = (template: string) => {
+        setSelectedTemplate(template);
+        setPolicy(policyTemplates[template as keyof typeof policyTemplates]);
+    };
 
-  const handleScenarioChange = (scenario: string) => {
-    setSelectedScenario(scenario);
-    setTestInput(JSON.stringify(testScenarios[scenario as keyof typeof testScenarios].input, null, 2));
-  };
+    const handleScenarioChange = (scenario: string) => {
+        setSelectedScenario(scenario);
+        setTestInput(JSON.stringify(testScenarios[scenario as keyof typeof testScenarios].input, null, 2));
+    };
 
-  const evaluatePolicy = () => {
-    setIsEvaluating(true);
-    
-    // Simulate OPA evaluation (in a real implementation, this would call OPA API)
-    setTimeout(() => {
-      try {
-        const input = JSON.parse(testInput);
-        
-        // Simple mock evaluation logic
-        let allow = false;
-        const errors: string[] = [];
-        
-        if (selectedTemplate === "basic-rbac") {
-          const userRoles = input.user?.roles || [];
-          const action = input.action;
-          
-          if (userRoles.includes("admin")) {
-            allow = true;
-          } else if (userRoles.includes("editor") && ["read", "write"].includes(action)) {
-            allow = true;
-          } else if (userRoles.includes("viewer") && action === "read") {
-            allow = true;
-          }
-        } else if (selectedTemplate === "resource-owner") {
-          if (input.user?.role === "admin" || input.user?.id === input.resource?.owner) {
-            allow = true;
-          } else if (input.user?.department === input.resource?.department && input.action === "read") {
-            allow = true;
-          }
+    // OPA server base URL
+    const OPA_BASE_URL = "http://localhost:8181";
+
+    // Upload policy to OPA server, with error handling for bad syntax
+    // Upload policy to OPA server, with error handling for bad syntax
+    const uploadPolicy = async (policyText: string, policyName = "example") => {
+        const res = await fetch(`${OPA_BASE_URL}/v1/policies/${policyName}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: policyText
+        });
+        if (!res.ok) {
+            console.log(res);
+            // Try to parse OPA error response
+            let errorMsg = "Failed to upload policy";
+            let errorDetails: any[] = [];
+            try {
+                const errJson = await res.json();
+                if (errJson.message) errorMsg = errJson.message;
+                if (Array.isArray(errJson.errors)) {
+                    errorDetails = errJson.errors.map((e: any) => {
+                        return {
+                            message: e.message,
+                            location: e.location || null,
+                            details: e.details || null
+                        };
+                    });
+                }
+            } catch { }
+            // Pass structured error info for UI rendering
+            throw new Error(JSON.stringify({ errorMsg, errorDetails }));
         }
-        
-        setResult({
-          allow,
-          errors: errors.length > 0 ? errors : undefined,
-          duration: "2.3ms"
-        });
-      } catch (error) {
-        setResult({
-          allow: false,
-          errors: ["Invalid JSON input"]
-        });
-      }
-      
-      setIsEvaluating(false);
-    }, 500);
-  };
+        return res;
+    };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Code className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">OPA Rule Designer</h2>
-        <Badge variant="secondary">Open Policy Agent</Badge>
-      </div>
-      
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Policy Editor */}
-        <div className="space-y-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Policy Editor</h3>
-              <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="basic-rbac">Basic RBAC</SelectItem>
-                  <SelectItem value="time-based">Time-based Access</SelectItem>
-                  <SelectItem value="resource-owner">Resource Owner</SelectItem>
-                </SelectContent>
-              </Select>
+    // Evaluate policy using OPA server
+    const evaluatePolicy = async () => {
+        setIsEvaluating(true);
+        let start = performance.now();
+        try {
+            // Upload policy first
+            await uploadPolicy(policy);
+
+            // Parse input
+            const inputObj = JSON.parse(testInput);
+
+            // POST to OPA data endpoint
+            const res = await fetch(`${OPA_BASE_URL}/v1/data/authz/allow`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ input: inputObj })
+            });
+            const data = await res.json();
+
+            let allow = false;
+            let errors: string[] = [];
+            if (res.ok && data && typeof data.result !== "undefined") {
+                allow = !!data.result;
+            } else {
+                errors.push("OPA server error or invalid response");
+            }
+            setResult({
+                allow,
+                errors: errors.length > 0 ? errors : undefined,
+                duration: `${(performance.now() - start).toFixed(1)}ms`
+            });
+        } catch (error: any) {
+            // Try to parse structured error info
+            let errors: any[] = [];
+            try {
+                const parsed = JSON.parse(error.message);
+                errors.push(parsed.errorMsg);
+                if (Array.isArray(parsed.errorDetails)) {
+                    errors = errors.concat(parsed.errorDetails);
+                }
+            } catch {
+                errors = (error.message || "Unknown error").split("\n");
+            }
+            setResult({
+                allow: false,
+                errors
+            });
+        }
+        setIsEvaluating(false);
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+                <Code className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-bold">OPA Rule Designer</h2>
+                <Badge variant="secondary">Open Policy Agent</Badge>
             </div>
-            
-            <Textarea
-              value={policy}
-              onChange={(e) => setPolicy(e.target.value)}
-              className="font-mono text-sm min-h-[400px]"
-              placeholder="Write your Rego policy here..."
-            />
-          </Card>
-          
-          <Card className="p-4 bg-info/5 border-info/20">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-4 w-4 text-info" />
-              <h4 className="font-medium text-info">Rego Policy Language</h4>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Write policies using Rego syntax. Use <code className="bg-muted px-1 rounded">input</code> to access request data,
-              define rules with conditions, and set <code className="bg-muted px-1 rounded">allow</code> decisions.
-            </p>
-          </Card>
-        </div>
-        
-        {/* Test & Evaluation */}
-        <div className="space-y-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Test Input</h3>
-              <Select value={selectedScenario} onValueChange={handleScenarioChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select scenario" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin-access">Admin Access</SelectItem>
-                  <SelectItem value="editor-access">Editor Access</SelectItem>
-                  <SelectItem value="viewer-access">Viewer Access</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Textarea
-              value={testInput}
-              onChange={(e) => setTestInput(e.target.value)}
-              className="font-mono text-sm min-h-[200px]"
-              placeholder="Enter test JSON input..."
-            />
-            
-            <Button 
-              onClick={evaluatePolicy} 
-              disabled={isEvaluating}
-              className="w-full mt-4"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              {isEvaluating ? "Evaluating..." : "Evaluate Policy"}
-            </Button>
-          </Card>
-          
-          {/* Results */}
-          {result && (
-            <Card className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Evaluation Result</h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  {result.allow ? (
-                    <CheckCircle className="h-5 w-5 text-success" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-destructive" />
-                  )}
-                  <span className={`font-medium ${result.allow ? 'text-success' : 'text-destructive'}`}>
-                    {result.allow ? 'ALLOW' : 'DENY'}
-                  </span>
-                  {result.duration && (
-                    <Badge variant="secondary" className="ml-auto">
-                      {result.duration}
-                    </Badge>
-                  )}
+
+            <div className="grid lg:grid-cols-2 gap-6">
+                {/* Policy Editor */}
+                <div className="space-y-4">
+                    <Card className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Policy Editor</h3>
+                            <div className="flex gap-4 items-center">
+                                <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
+                                    <SelectTrigger className="w-48">
+                                        <SelectValue placeholder="Select template" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="basic-rbac">Basic RBAC</SelectItem>
+                                        <SelectItem value="time-based">Time-based Access</SelectItem>
+                                        <SelectItem value="resource-owner">Resource Owner</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {/* Test Data input field */}
+                                <div>
+                                    <label htmlFor="testData" className="mr-2 text-sm font-medium">Test Data:</label>
+                                    <Select value={"custom-data"} onValueChange={() => { }}>
+                                        <SelectTrigger className="w-32">
+                                            <SelectValue placeholder="Test Data" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="custom-data">Custom Test Data</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <input
+                                        id="testData"
+                                        type="text"
+                                        placeholder="Enter Test Data..."
+                                        className="border rounded px-2 py-1 text-sm w-32 mt-1"
+                                        onChange={() => { }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <Textarea
+                            value={policy}
+                            onChange={(e) => setPolicy(e.target.value)}
+                            className="font-mono text-sm min-h-[400px]"
+                            placeholder="Write your Rego policy here..."
+                        />
+                    </Card>
+
+                    <Card className="p-4 bg-info/5 border-info/20">
+                        <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-4 w-4 text-info" />
+                            <h4 className="font-medium text-info">Rego Policy Language</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Write policies using Rego syntax. Use <code className="bg-muted px-1 rounded">input</code> to access request data,
+                            define rules with conditions, and set <code className="bg-muted px-1 rounded">allow</code> decisions.
+                        </p>
+                    </Card>
                 </div>
-                
-                {result.errors && result.errors.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-warning" />
-                      <span className="font-medium text-warning">Errors</span>
-                    </div>
-                    {result.errors.map((error, index) => (
-                      <p key={index} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-                        {error}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                
-                <div className="pt-2 border-t">
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Policy:</strong> {selectedTemplate}</p>
-                    <p><strong>Scenario:</strong> {selectedScenario}</p>
-                  </div>
+
+                {/* Test & Evaluation */}
+                <div className="space-y-4">
+                    <Card className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Test Input</h3>
+                            <Select value={selectedScenario} onValueChange={handleScenarioChange}>
+                                <SelectTrigger className="w-48">
+                                    <SelectValue placeholder="Select scenario" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin-access">Admin Access</SelectItem>
+                                    <SelectItem value="editor-access">Editor Access</SelectItem>
+                                    <SelectItem value="viewer-access">Viewer Access</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Textarea
+                            value={testInput}
+                            onChange={(e) => setTestInput(e.target.value)}
+                            className="font-mono text-sm min-h-[200px]"
+                            placeholder="Enter test JSON input..."
+                        />
+
+                        <Button
+                            onClick={evaluatePolicy}
+                            disabled={isEvaluating}
+                            className="w-full mt-4"
+                        >
+                            <Play className="h-4 w-4 mr-2" />
+                            {isEvaluating ? "Evaluating..." : "Evaluate Policy"}
+                        </Button>
+                    </Card>
+
+                    {/* Results */}
+                    {result && (
+                        <Card className="p-4">
+                            <h3 className="text-lg font-semibold mb-4">Evaluation Result</h3>
+
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    {result.allow ? (
+                                        <CheckCircle className="h-5 w-5 text-success" />
+                                    ) : (
+                                        <XCircle className="h-5 w-5 text-destructive" />
+                                    )}
+                                    <span className={`font-medium ${result.allow ? 'text-success' : 'text-destructive'}`}>
+                                        {result.allow ? 'ALLOW' : 'DENY'}
+                                    </span>
+                                    {result.duration && (
+                                        <Badge variant="secondary" className="ml-auto">
+                                            {result.duration}
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                {result.errors && result.errors.length > 0 && (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <AlertCircle className="h-4 w-4 text-warning" />
+                                            <span className="font-medium text-warning">Policy Syntax Errors</span>
+                                        </div>
+                                        {result.errors.map((error, index) => {
+                                            // If error is a string, just show it
+                                            if (typeof error === "string") {
+                                                return (
+                                                    <div key={index} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                                                        <span className="font-bold">Message:</span> {error}
+                                                    </div>
+                                                );
+                                            }
+                                            // If error is an object, show all details using type casting
+                                            const errObj = error as any;
+                                            return (
+                                                <div key={index} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                                                    {errObj.message && (
+                                                        <>
+                                                            <span className="font-bold">Message:</span> {errObj.message}
+                                                        </>
+                                                    )}
+                                                    {errObj.location && (
+                                                        <div className="text-xs text-muted-foreground mt-1">
+                                                            <span className="font-bold">Location:</span> File: {errObj.location.file}, Line: {errObj.location.row}, Col: {errObj.location.col}
+                                                        </div>
+                                                    )}
+                                                    {errObj.details && (
+                                                        <div className="text-xs text-muted-foreground mt-1">
+                                                            <span className="font-bold">Line:</span> <code>{errObj.details.line}</code> <span className="font-bold">Idx:</span> {errObj.details.idx}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                <div className="pt-2 border-t">
+                                    <div className="text-sm text-muted-foreground space-y-1">
+                                        <p><strong>Policy:</strong> {selectedTemplate}</p>
+                                        <p><strong>Scenario:</strong> {selectedScenario}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    <Card className="p-4 bg-warning/5 border-warning/20">
+                        <div className="flex items-center gap-2 mb-2">
+                            <AlertCircle className="h-4 w-4 text-warning" />
+                            <h4 className="font-medium text-warning">Testing Guidelines</h4>
+                        </div>
+                        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                            <li>Test with different user roles and permissions</li>
+                            <li>Verify edge cases and boundary conditions</li>
+                            <li>Check policy performance with complex rules</li>
+                            <li>Validate input structure matches policy expectations</li>
+                        </ul>
+                    </Card>
                 </div>
-              </div>
-            </Card>
-          )}
-          
-          <Card className="p-4 bg-warning/5 border-warning/20">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="h-4 w-4 text-warning" />
-              <h4 className="font-medium text-warning">Testing Guidelines</h4>
             </div>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Test with different user roles and permissions</li>
-              <li>Verify edge cases and boundary conditions</li>
-              <li>Check policy performance with complex rules</li>
-              <li>Validate input structure matches policy expectations</li>
-            </ul>
-          </Card>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
