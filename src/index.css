@@ -42,16 +42,10 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 217 91% 27%;
 
-    /* Enterprise colors for OPA editor */
-    --enterprise-primary: 214 84% 56%;
-    --enterprise-secondary: 220 13% 91%;
-    --enterprise-accent: 142 76% 36%;
-    --enterprise-warning: 38 92% 50%;
-    --success: 142 71% 45%;
-    --enterprise-danger: 0 84% 60%;
-
-    /* Background gradients for presentations */
-    --gradient-subtle: linear-gradient(180deg, hsl(217 91% 98%), hsl(0 0% 100%));
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 27%), hsl(217 91% 40%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 50%));
+    --gradient-dashboard: linear-gradient(180deg, hsl(217 91% 97%), hsl(0 0% 100%));
     
     /* Shadows */
     --shadow-elegant: 0 10px 30px -10px hsl(217 91% 27% / 0.3);
