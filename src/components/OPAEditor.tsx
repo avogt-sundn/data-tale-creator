@@ -51,69 +51,130 @@ pet_is_adopted if data.pet_attributes[input.resource].adopted == true
 };
 
 const testScenarios = {
-    "admin-access": {
+    "owner-full-access": {
         input: {
-
-
+            user: "alice",
+            action: "update",
+            resource: "dog123"
+        },
+        data: {
             user_attributes: {
-                alice: {
-                    tenure: 20,
-                    title: "owner"
-                },
-                bob: {
-                    tenure: 15,
-                    title: "employee"
-                },
-                eve: {
-                    tenure: 5,
-                    title: "employee"
-                },
-                dave: {
-                    tenure: 5,
-                    title: "customer"
-                }
+                alice: { tenure: 20, title: "owner" },
+                bob: { tenure: 15, title: "employee" },
+                eve: { tenure: 5, title: "employee" },
+                dave: { tenure: 5, title: "customer" }
             },
             pet_attributes: {
-                dog123: {
-                    adopted: true,
-                    age: 2,
-                    breed: "terrier",
-                    name: "toto"
-                },
-                dog456: {
-                    adopted: false,
-                    age: 3,
-                    breed: "german-shepherd",
-                    name: "rintintin"
-                },
-                dog789: {
-                    adopted: false,
-                    age: 2,
-                    breed: "collie",
-                    name: "lassie"
-                },
-                cat123: {
-                    adopted: false,
-                    age: 1,
-                    breed: "fictitious",
-                    name: "cheshire"
-                }
+                dog123: { adopted: true, age: 2, breed: "terrier", name: "toto" },
+                dog456: { adopted: false, age: 3, breed: "german-shepherd", name: "rintintin" },
+                dog789: { adopted: false, age: 2, breed: "collie", name: "lassie" },
+                cat123: { adopted: false, age: 1, breed: "fictitious", name: "cheshire" }
             }
-
         }
     },
-    "editor-access": {
+    "senior-employee-update": {
         input: {
-            user: { id: "u2", role: "editor", roles: ["editor"] },
-            action: "write",
-            resource: { id: "r1", owner: "u1" }
+            user: "bob",
+            action: "update", 
+            resource: "dog456"
+        },
+        data: {
+            user_attributes: {
+                alice: { tenure: 20, title: "owner" },
+                bob: { tenure: 15, title: "employee" },
+                eve: { tenure: 5, title: "employee" },
+                dave: { tenure: 5, title: "customer" }
+            },
+            pet_attributes: {
+                dog123: { adopted: true, age: 2, breed: "terrier", name: "toto" },
+                dog456: { adopted: false, age: 3, breed: "german-shepherd", name: "rintintin" },
+                dog789: { adopted: false, age: 2, breed: "collie", name: "lassie" },
+                cat123: { adopted: false, age: 1, breed: "fictitious", name: "cheshire" }
+            }
         }
     },
-    "viewer-access": {
+    "junior-employee-read": {
         input: {
-            user: { id: "u3", role: "viewer", roles: ["viewer"] },
-            action: "delete",
-            resource: { id: "r1", owner: "u1" }
+            user: "eve",
+            action: "read",
+            resource: "dog789"
+        },
+        data: {
+            user_attributes: {
+                alice: { tenure: 20, title: "owner" },
+                bob: { tenure: 15, title: "employee" },
+                eve: { tenure: 5, title: "employee" },
+                dave: { tenure: 5, title: "customer" }
+            },
+            pet_attributes: {
+                dog123: { adopted: true, age: 2, breed: "terrier", name: "toto" },
+                dog456: { adopted: false, age: 3, breed: "german-shepherd", name: "rintintin" },
+                dog789: { adopted: false, age: 2, breed: "collie", name: "lassie" },
+                cat123: { adopted: false, age: 1, breed: "fictitious", name: "cheshire" }
+            }
+        }
+    },
+    "customer-adopted-pet": {
+        input: {
+            user: "dave",
+            action: "read",
+            resource: "dog123"
+        },
+        data: {
+            user_attributes: {
+                alice: { tenure: 20, title: "owner" },
+                bob: { tenure: 15, title: "employee" },
+                eve: { tenure: 5, title: "employee" },
+                dave: { tenure: 5, title: "customer" }
+            },
+            pet_attributes: {
+                dog123: { adopted: true, age: 2, breed: "terrier", name: "toto" },
+                dog456: { adopted: false, age: 3, breed: "german-shepherd", name: "rintintin" },
+                dog789: { adopted: false, age: 2, breed: "collie", name: "lassie" },
+                cat123: { adopted: false, age: 1, breed: "fictitious", name: "cheshire" }
+            }
+        }
+    },
+    "customer-available-pet": {
+        input: {
+            user: "dave",
+            action: "read",
+            resource: "cat123"
+        },
+        data: {
+            user_attributes: {
+                alice: { tenure: 20, title: "owner" },
+                bob: { tenure: 15, title: "employee" },
+                eve: { tenure: 5, title: "employee" },
+                dave: { tenure: 5, title: "customer" }
+            },
+            pet_attributes: {
+                dog123: { adopted: true, age: 2, breed: "terrier", name: "toto" },
+                dog456: { adopted: false, age: 3, breed: "german-shepherd", name: "rintintin" },
+                dog789: { adopted: false, age: 2, breed: "collie", name: "lassie" },
+                cat123: { adopted: false, age: 1, breed: "fictitious", name: "cheshire" }
+            }
+        }
+    },
+    "unauthorized-action": {
+        input: {
+            user: "dave",
+            action: "update",
+            resource: "dog456"
+        },
+        data: {
+            user_attributes: {
+                alice: { tenure: 20, title: "owner" },
+                bob: { tenure: 15, title: "employee" },
+                eve: { tenure: 5, title: "employee" },
+                dave: { tenure: 5, title: "customer" }
+            },
+            pet_attributes: {
+                dog123: { adopted: true, age: 2, breed: "terrier", name: "toto" },
+                dog456: { adopted: false, age: 3, breed: "german-shepherd", name: "rintintin" },
+                dog789: { adopted: false, age: 2, breed: "collie", name: "lassie" },
+                cat123: { adopted: false, age: 1, breed: "fictitious", name: "cheshire" }
+            }
         }
     }
 };
@@ -127,8 +188,8 @@ interface EvaluationResult {
 export const OPAEditor = () => {
     const [policy, setPolicy] = useState(policyTemplates["basic-rbac"]);
     const [selectedTemplate, setSelectedTemplate] = useState("basic-rbac");
-    const [testInput, setTestInput] = useState(JSON.stringify(testScenarios["admin-access"].input, null, 2));
-    const [selectedScenario, setSelectedScenario] = useState("admin-access");
+    const [testInput, setTestInput] = useState(JSON.stringify(testScenarios["owner-full-access"].input, null, 2));
+    const [selectedScenario, setSelectedScenario] = useState("owner-full-access");
     const [result, setResult] = useState<EvaluationResult | null>(null);
     const [isEvaluating, setIsEvaluating] = useState(false);
 
@@ -187,11 +248,27 @@ export const OPAEditor = () => {
             // Upload policy first
             await uploadPolicy(policy);
 
-            // Parse input
-            const inputObj = JSON.parse(testInput);
+            // Parse input and data from the selected scenario
+            const scenario = testScenarios[selectedScenario as keyof typeof testScenarios];
+            const inputObj = scenario.input;
+            const dataObj = scenario.data;
 
-            // POST to OPA data endpoint
-            const res = await fetch(`${OPA_BASE_URL}/v1/data/authz/allow`, {
+            // Upload data to OPA server first
+            if (dataObj) {
+                const dataRes = await fetch(`${OPA_BASE_URL}/v1/data`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(dataObj)
+                });
+                if (!dataRes.ok) {
+                    throw new Error("Failed to upload data to OPA server");
+                }
+            }
+
+            // POST to OPA policy endpoint
+            const res = await fetch(`${OPA_BASE_URL}/v1/data/app/abac/allow`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -309,9 +386,12 @@ export const OPAEditor = () => {
                                     <SelectValue placeholder="Select scenario" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="admin-access">Admin Access</SelectItem>
-                                    <SelectItem value="editor-access">Editor Access</SelectItem>
-                                    <SelectItem value="viewer-access">Viewer Access</SelectItem>
+                                    <SelectItem value="owner-full-access">Owner Full Access</SelectItem>
+                                    <SelectItem value="senior-employee-update">Senior Employee Update</SelectItem>
+                                    <SelectItem value="junior-employee-read">Junior Employee Read</SelectItem>
+                                    <SelectItem value="customer-adopted-pet">Customer Adopted Pet</SelectItem>
+                                    <SelectItem value="customer-available-pet">Customer Available Pet</SelectItem>
+                                    <SelectItem value="unauthorized-action">Unauthorized Action</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
