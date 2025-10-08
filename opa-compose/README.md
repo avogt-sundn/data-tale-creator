@@ -1,8 +1,13 @@
 # OPA mit NGinx (cors header)
 
-Starten mit docker compose up.
+### Starten mit docker compose up.
 
-Testen mit curl localhost:8181 (von außerhalb VScode!):
+````bash
+docker network create docker-default-network
+docker compose -f opa-compose/docker-compose.yml up
+````
+
+### Testen mit curl localhost:8181 (von außerhalb VScode, falls VSCode im Devcontainer läuft):
 
 ````bash
 curl localhost:8181                                                <pre>
