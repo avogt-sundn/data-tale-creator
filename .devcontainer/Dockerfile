@@ -68,9 +68,10 @@ RUN apt-get update && apt-get install -y graphviz
 # END   plantuml extension
 
 
-# BEGIN plantuml extension
-RUN curl -L -o /usr/local/bin/opa  https://github.com/open-policy-agent/opa/releases/download/v1.8.0/opa_linux_amd64_static\
- && chmod +x  /usr/local/bin/opa
+# BEGIN open policy agent
+RUN ARCH=$( if [ $(arch) = "aarch64" ]; then echo arm64; else echo amd64; fi) \
+    && curl -L -o /usr/local/bin/opa  https://github.com/open-policy-agent/opa/releases/download/v1.9.0/opa_linux_amd64_static \
+    && chmod +x  /usr/local/bin/opa
     # END   plantuml extension
 
 LABEL traefik.enable="true" \
