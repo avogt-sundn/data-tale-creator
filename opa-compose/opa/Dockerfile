@@ -1,5 +1,5 @@
 # Use the official OPA Docker image as the base image
-FROM openpolicyagent/opa:edge-static-debug
+FROM openpolicyagent/opa:1.9.0-static-debug
 
 
 # Set the working directory inside the container
