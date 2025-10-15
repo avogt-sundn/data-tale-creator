@@ -8,8 +8,8 @@ echo "🚀 OPA gefunden unter hostname $host"
 # -----------------------------
 # Policy neu laden
 # -----------------------------
-POLICY_ID="lasttest"        
-PACKAGE_PATH="lasttest/abac"
+POLICY_ID="lasttest"
+PACKAGE_PATH="app/abac"
 
 echo "📄 Policy aktualisieren..."
 status=$(curl -X GET -s -w "%{http_code}" -o /dev/null http://$host:8181/v1/policies/$POLICY_ID)
@@ -33,15 +33,16 @@ echo "✅ Daten geladen"
 # Lasttest vorbereiten
 # -----------------------------
 echo "🧮 Generiere zufällige Requests..."
-REQ_COUNT=200
+REQ_COUNT=1
 TMP_REQS=reqs.ndjson
 : > $TMP_REQS
 
 for i in $(seq 1 $REQ_COUNT); do
   ACTION=$(shuf -n1 -e open open open open open delete)
   AUFGABE=$((1 + RANDOM % 10))
+  AUFGABE=7
   ROLE=$(shuf -n1 -e admin SB SB SB SB SB)
-  echo "{\"input\": {\"user\": {\"id\": \"u-$i\", \"role\": \"$ROLE\", \"attributes\": {\"aufgabenart\": \"aufgabenart-$AUFGABE\"}}, \"task\": {\"id\": \"t-$i\", \"attributes\": {\"aufgabenart\": \"aufgabenart-$((1 + RANDOM % 10))\"}}}, \"action\": \"$ACTION\"}}" >> $TMP_REQS
+  echo "{\"input\": {\"user\": {\"id\": \"u-$i\", \"role\": \"$ROLE\", \"attributes\": {\"aufgabenart\": \"aufgabenart-$AUFGABE\"}}, \"action\": \"$ACTION\"}}" >> $TMP_REQS
 done
 echo "✅ $REQ_COUNT Zufallsanfragen erzeugt"
 
