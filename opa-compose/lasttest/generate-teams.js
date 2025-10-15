@@ -1,6 +1,6 @@
 {
   teams: [
-    '{{repeat(5000)}}',
+      '{{repeat(5)}}',
     {
       id: 'team-{{index()}}',
       name: 'Team {{company()}}',
@@ -19,7 +19,7 @@
     }
   ],
   tasks: [
-    '{{repeat(250)}}',
+      '{{repeat(5)}}',
     {
       id: 't-{{index()}}',
       title: 'Task {{lorem(3, "words")}}',

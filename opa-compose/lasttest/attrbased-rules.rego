@@ -25,12 +25,12 @@ package app.abac
 default allow := false
 
 allow if {
-	input.user.attributes.aufgabenart == input.task.attributes.aufgabenart
+	input.user.attributes.aufgabenart == data.tasks[_].attributes.aufgabenart
 	input.action != "delete"
 }
 
 allow if {
-	input.user.attributes.aufgabenart == input.task.attributes.aufgabenart
+	input.user.attributes.aufgabenart == data.tasks.attributes.aufgabenart
 	input.action == "delete"
 	input.user.role == "admin"
 }
