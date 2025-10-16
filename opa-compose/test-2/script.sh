@@ -1,7 +1,15 @@
 #!/bin/bash
 
 EXAMPLE=example
+PACKAGE_PATH=app/abac
 
+TMP_GENERATED_DATA=/tmp/generated
+
+if true; then
+    node generate.js --count=1 --numUsers=1000000 --pets=1000000 > $TMP_GENERATED_DATA
+
+
+fi
 
 # Function to check if container is running
 
@@ -20,8 +28,8 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
     ping -c1 -W1 opa >/dev/null 2>&1 && host="opa" || host="localhost"
     echo "🚀 OPA gefunden unter hostname $host"
 
+
     if curl -s -o /dev/null -w "%{http_code}" http://$host:8181/health | grep -q "200"; then
-        host="opa"
         echo "OPA service found at $host"
         break
     else
@@ -49,15 +57,17 @@ curl >/dev/null 2>&1 -X PUT --data-binary @attrbased-rules.rego -H "Content-Type
 
 
 echo "Daten laden von data.json"
-curl -s -X PUT -H "Content-Type: application/json" --data-binary @data.json http://$host:8181/v1/data
+curl -s -X PUT -H "Content-Type: application/json" --data-binary @$TMP_GENERATED_DATA http://$host:8181/v1/data
 
 echo "Regeln auswerten zu input.json"
-cat <<EOF > v1-data-input.json
+cat <<EOF > /tmp/v1-data-input.json
 {
     "input": $(cat input.json)
 }
 EOF
-result=$(curl http://$host:8181/v1/data/app/abac -s --data-binary @v1-data-input.json -H 'Content-Type: application/json'|jq)
+result=$(curl http://$host:8181/v1/data/$PACKAGE_PATH -s --data-binary @/tmp/v1-data-input.json -H 'Content-Type: application/json'|jq)
 
-echo "Ergebnis:"
-echo $result|jq
+echo "  ** Ergebnis:"
+echo
+echo $result|jq|sed 's/^/     /'
+echo
