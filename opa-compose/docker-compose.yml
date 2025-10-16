@@ -7,6 +7,8 @@ services:
   opa:
    build: ./opa # Dockerfile local dir
    hostname: opa
+   mem_limit: 1000m
+   mem_reservation: 20m
 
   cors:
     build:

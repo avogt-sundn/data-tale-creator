@@ -1,0 +1,39 @@
+{
+    "tasks": [
+        {
+            "id": "t-0",
+            "title": "Task ex duis proident",
+            "attributes": {
+                "aufgabenart": "aufgabenart-7"
+            }
+        },
+        {
+            "id": "t-1",
+            "title": "Task aute dolor velit",
+            "attributes": {
+                "aufgabenart": "aufgabenart-4"
+            }
+        },
+        {
+            "id": "t-2",
+            "title": "Task duis Lorem aute",
+            "attributes": {
+                "aufgabenart": "aufgabenart-10"
+            }
+        },
+        {
+            "id": "t-3",
+            "title": "Task tempor duis in",
+            "attributes": {
+                "aufgabenart": "aufgabenart-3"
+            }
+        },
+        {
+            "id": "t-4",
+            "title": "Task nisi sint est",
+            "attributes": {
+                "aufgabenart": "aufgabenart-3"
+            }
+        }
+    ]
+}
