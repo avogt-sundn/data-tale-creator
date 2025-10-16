@@ -2,14 +2,20 @@
 
 ## Test-2 nutzt faker.js
 
+https://fakerjs.dev/guide/
+
 ```console
 npm install @faker-js/faker --save-dev
 ```
+
+## Starten
 
 Danach starten mit:
 ```console
 ./script.sh
 ```
+
+## Erklärung
 
 Das Skript generiert immer einen bob_0 und einen dog_0. So können wir testen, ob die Regeln funktionieren.
 
