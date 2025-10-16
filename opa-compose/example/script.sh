@@ -20,7 +20,7 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
     ping -c1 -W1 opa >/dev/null 2>&1 && host="opa" || host="localhost"
     echo "🚀 OPA gefunden unter hostname $host"
 
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8181/health | grep -q "200"; then
+    if curl -s -o /dev/null -w "%{http_code}" http://$host:8181/health | grep -q "200"; then
         host="opa"
         echo "OPA service found at $host"
         break
