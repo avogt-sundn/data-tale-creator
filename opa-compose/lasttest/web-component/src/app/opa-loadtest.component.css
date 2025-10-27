@@ -288,3 +288,10 @@ section {
     max-width: 133px;
   }
 }
+.split-view {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  height: 100%;
+  padding-bottom: 1rem;
+}

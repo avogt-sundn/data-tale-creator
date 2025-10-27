@@ -16,101 +16,115 @@
   <main>
     <div class="test-column">
       <section class="generate-data">
-        <h2>Datengenerierung</h2>
-        <div class="form-group">
-          <div class="input-wrapper">
-            <label>Anzahl Teams</label>
-            <input type="number" [(ngModel)]="teamCount" />
+        <div class="split-view">
+          <div>
+            <h2>Datengenerierung</h2>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <label>Anzahl Teams</label>
+                <input type="number" [(ngModel)]="teamCount" />
+              </div>
+              <div class="input-wrapper">
+                <label>Sachbearbeiter (Min)</label>
+                <input type="number" [(ngModel)]="minMembers" />
+              </div>
+              <div class="input-wrapper">
+                <label>Sachbearbeiter (Max)</label>
+                <input type="number" [(ngModel)]="maxMembers" />
+              </div>
+              <div class="input-wrapper">
+                <label>Anzahl Aufgaben</label>
+                <input type="number" [(ngModel)]="taskCount" />
+              </div>
+            </div>
+            <div class="form-group">
+              <button (click)="generateData()" class="btn">Daten generieren</button>
+              <button (click)="loadDataIntoOPA()" [disabled]="!lastGeneratedData" class="btn">
+                In OPA laden
+              </button>
+              <button (click)="queryOpaData()" class="btn">OPA Daten abfragen</button>
+            </div>
           </div>
-          <div class="input-wrapper">
-            <label>Sachbearbeiter (Min)</label>
-            <input type="number" [(ngModel)]="minMembers" />
+          <div>
+            <h3>Daten abfragen</h3>
+            <div class="form-group">
+              <div class="input-wrapper" style="width: 100%">
+                <label>Query Path</label>
+                <input style="max-width: 100%; width: 100%" type="text" [(ngModel)]="queryPath" />
+                <button
+                  style="min-width: 120px; margin-left: 0.5rem"
+                  class="btn btn-primary"
+                  (click)="queryData()"
+                >
+                  Query Data
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <textarea
+                name="result"
+                id=""
+                class="policy-editor"
+                rows="10"
+                [value]="queryResult | json"
+              ></textarea>
+            </div>
           </div>
-          <div class="input-wrapper">
-            <label>Sachbearbeiter (Max)</label>
-            <input type="number" [(ngModel)]="maxMembers" />
-          </div>
-          <div class="input-wrapper">
-            <label>Anzahl Aufgaben</label>
-            <input type="number" [(ngModel)]="taskCount" />
-          </div>
-        </div>
-        <div class="form-group">
-          <button (click)="generateData()" class="btn">Daten generieren</button>
-          <button (click)="loadDataIntoOPA()" [disabled]="!lastGeneratedData" class="btn">
-            In OPA laden
-          </button>
-          <button (click)="queryOpaData()" class="btn">OPA Daten abfragen</button>
-        </div>
-        <h3>Daten abfragen</h3>
-        <div class="form-group">
-          <div class="input-wrapper" style="width: 100%">
-            <label>Query Path</label>
-            <input style="max-width: 100%; width: 100%" type="text" [(ngModel)]="queryPath" />
-            <button
-              style="min-width: 120px; margin-left: 0.5rem"
-              class="btn btn-primary"
-              (click)="queryData()"
-            >
-              Query Data
-            </button>
-          </div>
-        </div>
-        <div class="form-group">
-          <textarea
-            name="result"
-            id=""
-            class="policy-editor"
-            rows="10"
-            [value]="queryResult | json"
-          ></textarea>
         </div>
       </section>
 
       <section>
         <h2>Policy Verwaltung</h2>
-        <div class="form-group">
-          <div class="input-wrapper">
-            <label>Policy ID</label>
-            <input type="text" [(ngModel)]="policyId" />
-          </div>
-          <button (click)="savePolicy()" class="btn">Policy speichern</button>
-          <button
-            (click)="loadPolicyIntoOPA()"
-            [disabled]="!regoPolicy.trim()"
-            class="btn btn-primary"
-          >
-            In OPA laden
-          </button>
-        </div>
-
-        <!-- Gespeicherte Policies -->
-        @if (policies.length > 0) {
-        <div class="form-group">
-          <span style="font-size: 0.85rem; color: #666">Gespeicherte Policies:</span>
-        </div>
-        <div class="policy-buttons">
-          @for (policy of policies; track $index) {
-          <div class="policy-item">
-            <button (click)="loadPolicyFile(policy)" class="btn btn-policy" title="Policy laden">
-              {{ policy }}
-            </button>
-            <button (click)="deletePolicyFile(policy)" class="btn-delete" title="Policy löschen">
-              ×
+        <div class="split-view">
+          <div class="form-group">
+            <div class="input-wrapper">
+              <label>Policy ID</label>
+              <input type="text" [(ngModel)]="policyId" />
+            </div>
+            <button (click)="savePolicy()" class="btn">Policy speichern</button>
+            <button
+              (click)="loadPolicyIntoOPA()"
+              [disabled]="!regoPolicy.trim()"
+              class="btn btn-primary"
+            >
+              In OPA laden
             </button>
           </div>
-          }
-        </div>
-        }
-
-        <div class="form-group">
-          <textarea
-            name="regoPolicy"
-            [(ngModel)]="regoPolicy"
-            class="policy-editor"
-            rows="15"
-            placeholder="Rego Policy hier eingeben..."
-          ></textarea>
+          <div>
+            <!-- Gespeicherte Policies -->
+            @if (policies.length > 0) {
+            <h3>Gespeicherte Policies</h3>
+            <div class="policy-buttons">
+              @for (policy of policies; track $index) {
+              <div class="policy-item">
+                <button
+                  (click)="loadPolicyFile(policy)"
+                  class="btn btn-policy"
+                  title="Policy laden"
+                >
+                  {{ policy }}
+                </button>
+                <button
+                  (click)="deletePolicyFile(policy)"
+                  class="btn-delete"
+                  title="Policy löschen"
+                >
+                  ×
+                </button>
+              </div>
+              }
+            </div>
+            }
+            <div class="form-group">
+              <textarea
+                name="regoPolicy"
+                [(ngModel)]="regoPolicy"
+                class="policy-editor"
+                rows="15"
+                placeholder="Rego Policy hier eingeben..."
+              ></textarea>
+            </div>
+          </div>
         </div>
       </section>
       <section style="grid-column-end: span 2">
