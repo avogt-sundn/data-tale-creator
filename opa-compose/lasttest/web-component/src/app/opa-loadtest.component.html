@@ -158,7 +158,7 @@
         <div class="stats">
           <div class="row title">
             <span
-              >{{ stat.name }} <br /><small>{{ stat.id }}</small>
+              >{{ stat.name }} <br /><small>{{ stat.id.substring(0, 20) }}</small>
             </span>
             <button (click)="restartContainer(stat.id, stat.name)" title="Container neustarten">
               &#10226;
