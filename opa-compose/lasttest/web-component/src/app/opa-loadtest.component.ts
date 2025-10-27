@@ -44,6 +44,9 @@ export class OpaLoadtestComponent implements OnInit {
   testProgress = 0;
   testStatusMessage = '';
 
+  queryResult = '';
+  queryPath = 'v1/data/teams/team-0/members/u-0';
+
   private addLog(message: string) {
     const timestamp = new Date().toLocaleTimeString('de-DE');
     this.statusLog.unshift(`${timestamp} - ${message}`);
@@ -196,6 +199,17 @@ export class OpaLoadtestComponent implements OnInit {
       error: (error) => this.addLog(`✖ Fehler: ${error.message}`),
     });
   }
+  queryData() {
+    this.http.get<any>(`http://localhost:8181/${this.queryPath}`).subscribe({
+      next: (data) => {
+        this.queryResult = data.result;
+      },
+      error: (error) => {
+        console.log(error);
+        this.addLog(`✖ Error`);
+      },
+    });
+  }
   loadPolicyFromOPA() {
     this.http.get<any>(`http://localhost:8181/v1/policies/${this.policyId}`).subscribe({
       next: (data) => {
@@ -222,6 +236,7 @@ export class OpaLoadtestComponent implements OnInit {
     });
   }
   loadPolicyFile(filename: string) {
+    this.policyId = filename.split('.')[0];
     this.http.get<any>(`${this.API_BASE}/policy/load/${filename}`).subscribe({
       next: (result) => {
         if (result.success) {
@@ -245,13 +260,14 @@ export class OpaLoadtestComponent implements OnInit {
     });
   }
   savePolicy() {
-    if (!this.regoPolicy.trim()) {
-      this.addLog('Keine Policy zum Speichern vorhanden');
+    if (!this.policyId.trim() || !this.regoPolicy.trim()) {
+      this.addLog('Policy ID und Defnition angeben!');
       return;
     }
-
+    const filename = `${this.policyId}.rego`;
     this.http
       .post<any>(`${this.API_BASE}/policy/save`, {
+        filename: filename,
         content: this.regoPolicy,
       })
       .subscribe({
@@ -370,7 +386,8 @@ export class OpaLoadtestComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             this.testResults = response.stats;
-            console.log('testResults', this.testResults);
+            console.log(this.testResults);
+            this.addLog(`✓ Test abgeschlossen`);
           }
           this.isTestRunning = false;
           this.testStatusMessage = '';

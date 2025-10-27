@@ -16,6 +16,9 @@ const maxPoilicies = 4;
 app.use(cors());
 app.use(express.json({ limit: '500mb' }));
 
+const POLICIES_DIR = path.join(__dirname, '../policies');
+fs.mkdir(POLICIES_DIR, { recursive: true });
+
 app.listen(PORT, () => {
 	console.log(`Server läuft auf http://localhost:${PORT}`);
 });
@@ -139,32 +142,17 @@ function generateTestData(teamCount, minMembers, maxMembers, taskCount) {
 	return { teams, tasks };
 }
 app.post('/policy/save', async (req, res) => {
-	try {
-		const policyPath = path.join(BASE_DIR, 'policies');
-		await fs.mkdir(policyPath, { recursive: true });
-		const files = await fs.readdir(policyPath);
-		const policyFiles = files.filter((f) => f.startsWith('policy-') && f.endsWith('.rego'));
-		const policyNumbers = policyFiles
-			.map((f) => parseInt(f.match(/policy-(\d+)\.rego/)?.[1] || '0'))
-			.filter((n) => !isNaN(n))
-			.sort((a, b) => a - b);
-
-		let nextNumber = 1;
-		for (let i = 1; i <= maxPoilicies; i++) {
-			if (!policyNumbers.includes(i)) {
-				nextNumber = i;
-				break;
-			}
-		}
-		nextNumber = policyNumbers.length >= maxPoilicies ? maxPoilicies : nextNumber;
-		const filename = `policy-${nextNumber}.rego`;
-		const filePath = path.join(policyPath, filename);
-		await fs.writeFile(filePath, req.body.content);
-		res.json({ success: true, message: 'Policy saved', filename });
-	} catch (error) {
-		console.error('❌ save Policy failed:', error.message);
-		res.status(500).json({ success: false, error: error.message });
+	const { filename, content } = req.body;
+	if (!filename || !content) {
+		return res.status(400).json({ error: '❌ Filename und Content erforderlich' });
 	}
+	if (!filename.endsWith('.rego')) {
+		return res.status(400).json({ error: '❌ Nur .rego Dateien erlaubt' });
+	}
+
+	const filepath = path.join(POLICIES_DIR, filename);
+	await fs.writeFile(filepath, content, 'utf8');
+	res.json({ success: true });
 });
 app.get('/policy/load/:filename', async (req, res) => {
 	try {

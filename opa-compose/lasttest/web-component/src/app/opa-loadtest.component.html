@@ -15,7 +15,7 @@
 
   <main>
     <div class="test-column">
-      <section>
+      <section class="generate-data">
         <h2>Datengenerierung</h2>
         <div class="form-group">
           <div class="input-wrapper">
@@ -26,8 +26,6 @@
             <label>Sachbearbeiter (Min)</label>
             <input type="number" [(ngModel)]="minMembers" />
           </div>
-        </div>
-        <div class="form-group">
           <div class="input-wrapper">
             <label>Sachbearbeiter (Max)</label>
             <input type="number" [(ngModel)]="maxMembers" />
@@ -44,7 +42,31 @@
           </button>
           <button (click)="queryOpaData()" class="btn">OPA Daten abfragen</button>
         </div>
+        <h3>Daten abfragen</h3>
+        <div class="form-group">
+          <div class="input-wrapper" style="width: 100%">
+            <label>Query Path</label>
+            <input style="max-width: 100%; width: 100%" type="text" [(ngModel)]="queryPath" />
+            <button
+              style="min-width: 120px; margin-left: 0.5rem"
+              class="btn btn-primary"
+              (click)="queryData()"
+            >
+              Query Data
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <textarea
+            name="result"
+            id=""
+            class="policy-editor"
+            rows="10"
+            [value]="queryResult | json"
+          ></textarea>
+        </div>
       </section>
+
       <section>
         <h2>Policy Verwaltung</h2>
         <div class="form-group">

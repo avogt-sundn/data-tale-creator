@@ -41,18 +41,20 @@ export class OpaService {
           'Content-Type': 'text/plain',
         }),
         observe: 'response',
+        responseType: 'text' as 'json',
       })
       .pipe(
         map((response: { status: number }) => ({
           success: response.status === 200,
           message: `Policy '${policyId}' loaded successfully`,
         })),
-        catchError((error: { message: any }) =>
-          of({
+        catchError((error) => {
+          console.error('Error:', error);
+          return of({
             success: false,
-            message: `Failed to load policy: ${error.message}`,
-          })
-        )
+            message: error,
+          });
+        })
       );
   }
   getAllData(): Observable<any> {
