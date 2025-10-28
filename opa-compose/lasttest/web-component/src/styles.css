@@ -15,6 +15,11 @@ h2 {
   font-size: 1.2rem;
   color: rgb(84, 84, 84);
 }
+h3 {
+  margin: 0.8rem 0;
+  font-size: 1.1rem;
+  color: rgb(84, 84, 84);
+}
 * {
   box-sizing: border-box;
 }

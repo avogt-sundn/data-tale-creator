@@ -28,10 +28,9 @@ export class OpaLoadtestComponent implements OnInit {
   lastGeneratedData: any = null;
   statusLog: string[] = [];
 
-  regoPolicy = '';
-  policyId = 'lasttest';
-  policyCounter = 1;
-  policies: string[] = [];
+  policyFiles: string[] = [];
+  policies: any[] = [];
+  selectedPolicy: { id: string; raw: string } | null = null;
 
   dockerStats: any[] = [];
   dockerStatsInterval: any;
@@ -46,6 +45,8 @@ export class OpaLoadtestComponent implements OnInit {
 
   queryResult = '';
   queryPath = 'v1/data/teams/team-0/members/u-0';
+  teamsInOpa = 0;
+  tasksInOpa = 0;
 
   private addLog(message: string) {
     const timestamp = new Date().toLocaleTimeString('de-DE');
@@ -54,9 +55,9 @@ export class OpaLoadtestComponent implements OnInit {
   ngOnInit() {
     this.checkBackendHealth();
     this.checkOpaConnection();
+    this.getStoredPolicies();
     this.queryOpaData();
-    this.loadPolicyFromOPA();
-    this.getPolicies();
+    this.loadPoliciesFromOPA();
     this.startDockerStatsPolling();
   }
   checkBackendHealth() {
@@ -71,7 +72,6 @@ export class OpaLoadtestComponent implements OnInit {
     });
   }
   restartContainer(containerId: string, containerName: string) {
-    const isOpa = containerName.includes('opa') || containerName.includes('openpolicyagent');
     const message = `Container "${containerName}" neustarten?\n\n⚠️ Alle Daten und Policies gehen verloren!`;
     if (!confirm(message)) {
       return;
@@ -81,23 +81,9 @@ export class OpaLoadtestComponent implements OnInit {
     this.http.post(`${this.API_BASE}/docker/restart/${containerId}`, {}).subscribe({
       next: () => {
         this.addLog(`✓ Container ${containerName} neugestartet`);
-
+        this.loadPoliciesFromOPA();
+        this.queryOpaData();
         this.loadDockerStats();
-
-        if (isOpa) {
-          this.addLog('Warte auf OPA...');
-
-          setTimeout(() => {
-            if (this.regoPolicy.trim()) {
-              this.loadPolicyIntoOPA();
-            } else {
-              this.loadPolicyFromOPA();
-            }
-            if (this.lastGeneratedData) {
-              this.loadDataIntoOPA();
-            }
-          }, 2000);
-        }
       },
       error: (error) => {
         this.addLog(`✗ Fehler beim Restart: ${error.message}`);
@@ -173,6 +159,7 @@ export class OpaLoadtestComponent implements OnInit {
         next: (result) => {
           if (result.success) {
             this.addLog('✓ Daten in OPA geladen');
+            this.queryOpaData();
           } else {
             this.addLog(`✖ Fehler: ${result.message}`);
           }
@@ -183,10 +170,9 @@ export class OpaLoadtestComponent implements OnInit {
   queryOpaData() {
     this.opaService.getAllData().subscribe({
       next: (data) => {
-        const teams = data.result?.teams ? Object.keys(data.result.teams).length : 0;
-        const tasks = data.result?.tasks ? Object.keys(data.result.tasks).length : 0;
-        if (teams > 0 || tasks > 0) {
-          this.addLog(`OPA Daten: ${teams} Teams, ${tasks} Tasks`);
+        this.teamsInOpa = data.result?.teams ? Object.keys(data.result.teams).length : 0;
+        this.tasksInOpa = data.result?.tasks ? Object.keys(data.result.tasks).length : 0;
+        if (this.teamsInOpa > 0 || this.tasksInOpa > 0) {
           this.lastGeneratedData = {
             teams: data.result.teams || {},
             tasks: data.result.tasks || {},
@@ -210,38 +196,41 @@ export class OpaLoadtestComponent implements OnInit {
       },
     });
   }
-  loadPolicyFromOPA() {
-    this.http.get<any>(`http://localhost:8181/v1/policies/${this.policyId}`).subscribe({
+  loadPoliciesFromOPA() {
+    this.http.get<any>(`http://localhost:8181/v1/policies`).subscribe({
       next: (data) => {
-        if (data.result && data.result.raw) {
-          this.regoPolicy = data.result.raw;
-          this.addLog(`✓ Policy '${this.policyId}' aus OPA geladen`);
-        } else {
-          this.addLog(`✖ Keine Policy mit ID '${this.policyId}' in OPA gefunden`);
+        if (data.result) {
+          this.policies = data.result;
         }
       },
       error: (error) => {
-        this.addLog(`✖ Policy '${this.policyId}' nicht in OPA gefunden`);
+        this.addLog(`✖ Policy '${this.selectedPolicy?.id}' nicht in OPA gefunden`);
       },
     });
   }
-  getPolicies() {
-    this.http.get(`${this.API_BASE}/policy/get`).subscribe({
+  getStoredPolicies() {
+    this.http.get(`${this.API_BASE}/policies`).subscribe({
       next: (result: any) => {
         if (result.success) {
-          this.policies = result.files;
+          this.policyFiles = result.files;
+          if (this.policyFiles) {
+            this.addLog(`✓ ${this.policyFiles.length} Policiy Files vom Server geladen.`);
+            this.policyFiles.forEach((policy) => {
+              this.loadPolicyFile(policy);
+            });
+          }
         }
       },
       error: (error) => this.addLog(`✖ Fehler beim Laden: ${error.message}`),
     });
   }
   loadPolicyFile(filename: string) {
-    this.policyId = filename.split('.')[0];
+    const id = filename.split('.')[0];
     this.http.get<any>(`${this.API_BASE}/policy/load/${filename}`).subscribe({
       next: (result) => {
         if (result.success) {
-          this.regoPolicy = result.content;
-          this.addLog(`✓ Policy '${filename}' geladen`);
+          this.selectedPolicy = { id, raw: result.content };
+          this.addLog(`✓ Policyfile '${filename}' geladen`);
         }
       },
       error: (error) => this.addLog(`✖ Fehler beim Laden: ${error.message}`),
@@ -253,50 +242,65 @@ export class OpaLoadtestComponent implements OnInit {
     }
     this.http.delete(`${this.API_BASE}/policy/delete/${filename}`).subscribe({
       next: () => {
-        this.addLog(`✓ Policy '${filename}' gelöscht`);
-        this.getPolicies();
+        this.addLog(`✓ Policyfile '${filename}' gelöscht`);
+        this.getStoredPolicies();
       },
       error: (error) => this.addLog(`✖ Fehler beim Löschen: ${error.message}`),
     });
   }
   savePolicy() {
-    if (!this.policyId.trim() || !this.regoPolicy.trim()) {
+    if (!this.selectedPolicy?.id.trim() || !this.selectedPolicy.raw.trim()) {
       this.addLog('Policy ID und Defnition angeben!');
       return;
     }
-    const filename = `${this.policyId}.rego`;
+    const filename = `${this.selectedPolicy.id}.rego`;
     this.http
       .post<any>(`${this.API_BASE}/policy/save`, {
         filename: filename,
-        content: this.regoPolicy,
+        content: this.selectedPolicy.raw,
       })
       .subscribe({
         next: (result) => {
           if (result.success) {
             this.addLog(`✓ Policy gespeichert: ${result.filename}`);
-            this.getPolicies();
+            this.getStoredPolicies();
           }
         },
         error: (error) => this.addLog(`✖ Fehler beim Speichern: ${error.message}`),
       });
   }
   loadPolicyIntoOPA() {
-    if (!this.regoPolicy.trim()) {
+    if (!this.selectedPolicy?.raw.trim()) {
       this.addLog('Keine Policy zum Laden vorhanden');
       return;
     }
 
-    this.addLog('Lade Policy in OPA...');
-
-    this.opaService.loadPolicy(this.regoPolicy, this.policyId).subscribe({
+    this.opaService.loadPolicy(this.selectedPolicy.raw, this.selectedPolicy.id).subscribe({
       next: (result) => {
         if (result.success) {
-          this.addLog(`✓ Policy in OPA geladen: ${this.policyId}`);
+          this.addLog(`✓ Policy in OPA geladen: ${this.selectedPolicy?.id}`);
+          this.loadPoliciesFromOPA();
         } else {
           this.addLog(`✖ Fehler: ${result.message}`);
         }
       },
       error: (error) => this.addLog(`✖ Fehler beim Laden in OPA: ${error.message}`),
+    });
+  }
+  deletePolicyInOpa(policyId: string) {
+    if (!confirm(`Policy '${policyId}' in OPA wirklich löschen?`)) {
+      return;
+    }
+    this.opaService.deletePolicy(policyId).subscribe({
+      next: (result) => {
+        if (result.success) {
+          this.addLog(`✓ Policy in OPA gelöscht: ${policyId}`);
+          this.loadPoliciesFromOPA();
+        } else {
+          this.addLog(`✖ Fehler: ${result.message}`);
+        }
+      },
+      error: (error) => this.addLog(`✖ Fehler: ${error.message}`),
     });
   }
   startDockerStatsPolling() {
@@ -309,7 +313,9 @@ export class OpaLoadtestComponent implements OnInit {
     this.opaService.getDockerStats().subscribe({
       next: (result) => {
         if (result.success) {
-          this.dockerStats = result.stats;
+          this.dockerStats = (result.stats as any[]).filter((container) =>
+            container.name.includes('opa')
+          );
         }
       },
       error: () => {
@@ -361,7 +367,7 @@ export class OpaLoadtestComponent implements OnInit {
     return inputs;
   }
   executeLoadTest() {
-    if (!this.lastGeneratedData || !this.regoPolicy.trim()) {
+    if (!this.lastGeneratedData || !this.selectedPolicy?.raw.trim()) {
       return;
     }
     this.isTestRunning = true;

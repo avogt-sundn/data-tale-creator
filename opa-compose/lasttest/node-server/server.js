@@ -174,7 +174,7 @@ app.delete('/policy/delete/:filename', async (req, res) => {
 		res.status(500).json({ success: false, error: error.message });
 	}
 });
-app.get('/policy/get', async (req, res) => {
+app.get('/policies', async (req, res) => {
 	try {
 		const folder = path.join(BASE_DIR, 'policies');
 		const files = await fs.readdir(folder);

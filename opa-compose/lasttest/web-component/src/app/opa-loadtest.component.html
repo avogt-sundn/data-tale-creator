@@ -42,10 +42,17 @@
               <button (click)="loadDataIntoOPA()" [disabled]="!lastGeneratedData" class="btn">
                 In OPA laden
               </button>
-              <button (click)="queryOpaData()" class="btn">OPA Daten abfragen</button>
             </div>
           </div>
-          <div>
+          <div class="stats">
+            <h3>
+              Geladene Daten in OPA:
+              <small>
+                <b>{{ teamsInOpa }}</b> Teams, <b> {{ tasksInOpa }}</b> Tasks
+              </small>
+            </h3>
+          </div>
+          <div style="border-top: 1px solid #ccc; margin-top: 1.5rem">
             <h3>Daten abfragen</h3>
             <div class="form-group">
               <div class="input-wrapper" style="width: 100%">
@@ -53,7 +60,7 @@
                 <input style="max-width: 100%; width: 100%" type="text" [(ngModel)]="queryPath" />
                 <button
                   style="min-width: 120px; margin-left: 0.5rem"
-                  class="btn btn-primary"
+                  class="btn"
                   (click)="queryData()"
                 >
                   Query Data
@@ -76,33 +83,42 @@
       <section>
         <h2>Policy Verwaltung</h2>
         <div class="split-view">
-          <div class="form-group">
-            <div class="input-wrapper">
-              <label>Policy ID</label>
-              <input type="text" [(ngModel)]="policyId" />
+          <div style="border-bottom: 1px solid #ccc">
+            <h3>In OPA geladene Policies</h3>
+            <div class="form-group">
+              <div class="policy-buttons" style="margin-bottom: 0">
+                @for (policy of policies; track policy.id) {
+                <div class="policy-item">
+                  <button class="btn btn-policy" [title]="policy.raw">
+                    {{ policy.id }}
+                  </button>
+                  <button
+                    (click)="deletePolicyInOpa(policy.id)"
+                    class="btn-delete"
+                    title="Policy löschen"
+                  >
+                    ×
+                  </button>
+                </div>
+                } @empty {
+                <span>⚠️ keine Policies geladen.</span>
+                }
+              </div>
             </div>
-            <button (click)="savePolicy()" class="btn">Policy speichern</button>
-            <button
-              (click)="loadPolicyIntoOPA()"
-              [disabled]="!regoPolicy.trim()"
-              class="btn btn-primary"
-            >
-              In OPA laden
-            </button>
           </div>
           <div>
             <!-- Gespeicherte Policies -->
-            @if (policies.length > 0) {
-            <h3>Gespeicherte Policies</h3>
+            @if (policyFiles.length > 0) {
+            <h3>Gespeicherte Policies (Filesystem)</h3>
             <div class="policy-buttons">
-              @for (policy of policies; track $index) {
+              @for (policy of policyFiles; track $index) {
               <div class="policy-item">
                 <button
                   (click)="loadPolicyFile(policy)"
                   class="btn btn-policy"
                   title="Policy laden"
                 >
-                  {{ policy }}
+                  {{ policy.split('.')[0] }}
                 </button>
                 <button
                   (click)="deletePolicyFile(policy)"
@@ -114,16 +130,33 @@
               </div>
               }
             </div>
-            }
+            <div class="form-group" style="margin-top: 2rem">
+              <div class="input-wrapper">
+                <label>Policy ID</label>
+                @if (selectedPolicy) {
+                <input type="text" [(ngModel)]="selectedPolicy.id" />
+                }
+              </div>
+              <button (click)="savePolicy()" class="btn">Policy speichern</button>
+              <button
+                (click)="loadPolicyIntoOPA()"
+                [disabled]="!selectedPolicy?.raw?.trim()"
+                class="btn"
+              >
+                In OPA laden
+              </button>
+            </div>
+            } @if (selectedPolicy) {
             <div class="form-group">
               <textarea
-                name="regoPolicy"
-                [(ngModel)]="regoPolicy"
+                name="selectedPolicy"
+                [(ngModel)]="selectedPolicy.raw"
                 class="policy-editor"
                 rows="15"
                 placeholder="Rego Policy hier eingeben..."
               ></textarea>
             </div>
+            }
           </div>
         </div>
       </section>
@@ -148,8 +181,8 @@
         <div class="form-group">
           <button
             (click)="executeLoadTest()"
-            [disabled]="isTestRunning || !lastGeneratedData || !regoPolicy.trim()"
-            class="btn btn-primary"
+            [disabled]="isTestRunning || !lastGeneratedData || !selectedPolicy?.raw?.trim()"
+            class="btn"
           >
             {{ isTestRunning ? testStatusMessage : 'Lasttest Starten' }}
           </button>
@@ -159,7 +192,7 @@
         <span class="loader"></span>
         } @if (!lastGeneratedData) {
         <div class="info-box">⚠️ Erst Daten generieren und in OPA laden!</div>
-        } @if (lastGeneratedData && !regoPolicy.trim()) {
+        } @if (lastGeneratedData && !selectedPolicy?.raw?.trim()) {
         <div class="info-box">⚠️ Erst eine Policy in OPA laden!</div>
         }
       </section>
@@ -174,7 +207,11 @@
             <span
               >{{ stat.name }} <br /><small>{{ stat.id.substring(0, 20) }}</small>
             </span>
-            <button (click)="restartContainer(stat.id, stat.name)" title="Container neustarten">
+            <button
+              class="restart"
+              (click)="restartContainer(stat.id, stat.name)"
+              title="Container neustarten"
+            >
               &#10226;
             </button>
           </div>

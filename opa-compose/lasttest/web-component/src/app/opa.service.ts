@@ -68,4 +68,24 @@ export class OpaService {
       })
     );
   }
+  deletePolicy(policyId: string): Observable<any> {
+    const url = `${this.opaBaseUrl}/v1/policies/${policyId}`;
+    return this.http
+      .delete(url, {
+        observe: 'response',
+      })
+      .pipe(
+        map((response) => ({
+          success: response.status === 200,
+          message: `Policy '${policyId}' deleted successfully`,
+        })),
+        catchError((error) => {
+          console.error('Delete error:', error);
+          return of({
+            success: false,
+            message: `Failed to delete policy: ${error.message}`,
+          });
+        })
+      );
+  }
 }
