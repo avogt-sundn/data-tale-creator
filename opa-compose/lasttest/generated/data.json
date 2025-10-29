@@ -1,0 +1,485 @@
+{
+  "teams": {
+    "team-0": {
+      "id": "team-0",
+      "name": "Team 0",
+      "members": {
+        "u-0": {
+          "id": "u-0",
+          "name": "Daren Crist",
+          "email": "Kraig11@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "HSB"
+        },
+        "u-1": {
+          "id": "u-1",
+          "name": "Yadira Casper-Block",
+          "email": "Orpha42@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-2": {
+          "id": "u-2",
+          "name": "Constantin Waters",
+          "email": "Moshe.Mante86@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-3": {
+          "id": "u-3",
+          "name": "Violet Kris",
+          "email": "Violet_Halvorson@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "SB"
+        },
+        "u-4": {
+          "id": "u-4",
+          "name": "Santos Muller",
+          "email": "Jedediah_Greenfelder@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-5": {
+          "id": "u-5",
+          "name": "Deondre Mohr",
+          "email": "Lenore_Block82@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-6": {
+          "id": "u-6",
+          "name": "April Wiza",
+          "email": "Jevon98@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-7": {
+          "id": "u-7",
+          "name": "Carolanne Boyle",
+          "email": "Caitlyn.Hamill68@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        },
+        "u-8": {
+          "id": "u-8",
+          "name": "Otha Ankunding",
+          "email": "Verner51@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-9": {
+          "id": "u-9",
+          "name": "Enrique Lowe",
+          "email": "Jamar_Emard91@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-10": {
+          "id": "u-10",
+          "name": "Vincent Williamson",
+          "email": "Zachary_Corwin11@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        }
+      }
+    },
+    "team-1": {
+      "id": "team-1",
+      "name": "Team 1",
+      "members": {
+        "u-0": {
+          "id": "u-0",
+          "name": "Alexane McKenzie",
+          "email": "Johnson_Greenfelder@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "HSB"
+        },
+        "u-1": {
+          "id": "u-1",
+          "name": "Devante Osinski",
+          "email": "Marc_Hermann-Stoltenberg26@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-2": {
+          "id": "u-2",
+          "name": "Alyce Stanton",
+          "email": "Dario_Hodkiewicz69@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-3": {
+          "id": "u-3",
+          "name": "Forest Ryan",
+          "email": "Chad_Pfannerstill92@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-2"
+          },
+          "role": "SB"
+        },
+        "u-4": {
+          "id": "u-4",
+          "name": "Isaac Nienow",
+          "email": "Reymundo49@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-5": {
+          "id": "u-5",
+          "name": "Freda Heidenreich",
+          "email": "Juana_Stracke-Wiza88@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-2"
+          },
+          "role": "SB"
+        },
+        "u-6": {
+          "id": "u-6",
+          "name": "Judson Haag",
+          "email": "Alta67@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-7": {
+          "id": "u-7",
+          "name": "Rey Ebert",
+          "email": "Ilene75@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-2"
+          },
+          "role": "SB"
+        }
+      }
+    },
+    "team-2": {
+      "id": "team-2",
+      "name": "Team 2",
+      "members": {
+        "u-0": {
+          "id": "u-0",
+          "name": "Arielle Sipes",
+          "email": "Brendon_Moore38@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "HSB"
+        },
+        "u-1": {
+          "id": "u-1",
+          "name": "Malcolm Gottlieb",
+          "email": "Samara49@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        },
+        "u-2": {
+          "id": "u-2",
+          "name": "Yvonne Lemke",
+          "email": "Diamond78@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-2"
+          },
+          "role": "SB"
+        },
+        "u-3": {
+          "id": "u-3",
+          "name": "Robyn Grant",
+          "email": "Cali.Hamill-Bartoletti@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        },
+        "u-4": {
+          "id": "u-4",
+          "name": "Finn Lockman",
+          "email": "Demarcus.Jenkins15@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-5": {
+          "id": "u-5",
+          "name": "Blanca Upton",
+          "email": "Rebekah50@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-6": {
+          "id": "u-6",
+          "name": "Danial Wyman",
+          "email": "Jovany67@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        },
+        "u-7": {
+          "id": "u-7",
+          "name": "Stevie Batz",
+          "email": "Krystel_Dach33@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-8": {
+          "id": "u-8",
+          "name": "Rigoberto O'Kon",
+          "email": "Curt24@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        }
+      }
+    },
+    "team-3": {
+      "id": "team-3",
+      "name": "Team 3",
+      "members": {
+        "u-0": {
+          "id": "u-0",
+          "name": "Manley Parker",
+          "email": "Laury21@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "HSB"
+        },
+        "u-1": {
+          "id": "u-1",
+          "name": "Gilberto Wisoky",
+          "email": "Sonia.Kemmer@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-2": {
+          "id": "u-2",
+          "name": "Vincenza Bashirian",
+          "email": "Margarete35@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-3": {
+          "id": "u-3",
+          "name": "Crystal Kub",
+          "email": "Beulah.Kiehn@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        },
+        "u-4": {
+          "id": "u-4",
+          "name": "Ahmed Koepp",
+          "email": "Cecelia.Brown40@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-5": {
+          "id": "u-5",
+          "name": "Garnett Feil",
+          "email": "Fidel7@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "SB"
+        },
+        "u-6": {
+          "id": "u-6",
+          "name": "Dylan Baumbach",
+          "email": "Rosetta55@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "SB"
+        },
+        "u-7": {
+          "id": "u-7",
+          "name": "Jan Kozey",
+          "email": "Lempi1@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        }
+      }
+    },
+    "team-4": {
+      "id": "team-4",
+      "name": "Team 4",
+      "members": {
+        "u-0": {
+          "id": "u-0",
+          "name": "Dayne Reilly",
+          "email": "Keeley_Carter32@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "HSB"
+        },
+        "u-1": {
+          "id": "u-1",
+          "name": "Raina Abbott",
+          "email": "Emmet.Dach45@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-2"
+          },
+          "role": "SB"
+        },
+        "u-2": {
+          "id": "u-2",
+          "name": "Jaida Considine-Hartmann",
+          "email": "Alana_Ledner59@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-3": {
+          "id": "u-3",
+          "name": "Bret Goyette",
+          "email": "Rowland_Balistreri-Considine@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-3"
+          },
+          "role": "SB"
+        },
+        "u-4": {
+          "id": "u-4",
+          "name": "Reymundo Okuneva",
+          "email": "Savannah.Yundt69@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-5": {
+          "id": "u-5",
+          "name": "Cyrus Watsica",
+          "email": "Jonathon_Ledner5@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-1"
+          },
+          "role": "SB"
+        },
+        "u-6": {
+          "id": "u-6",
+          "name": "Rodrick Kuphal",
+          "email": "Anabelle_Schamberger-Breitenberg54@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-7": {
+          "id": "u-7",
+          "name": "Nolan Torp",
+          "email": "Emily_Towne@hotmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-2"
+          },
+          "role": "SB"
+        },
+        "u-8": {
+          "id": "u-8",
+          "name": "Krystal Waters",
+          "email": "Baron43@yahoo.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-5"
+          },
+          "role": "SB"
+        },
+        "u-9": {
+          "id": "u-9",
+          "name": "Bradford Predovic",
+          "email": "Reymundo50@gmail.com",
+          "attributes": {
+            "aufgabenart": "aufgabenart-4"
+          },
+          "role": "SB"
+        }
+      }
+    }
+  },
+  "tasks": {
+    "t-0": {
+      "id": "t-0",
+      "title": "Task atrocitas ipsa demens",
+      "attributes": {
+        "aufgabenart": "aufgabenart-4"
+      }
+    },
+    "t-1": {
+      "id": "t-1",
+      "title": "Task quos basium alveus",
+      "attributes": {
+        "aufgabenart": "aufgabenart-1"
+      }
+    },
+    "t-2": {
+      "id": "t-2",
+      "title": "Task tricesimus alias curo",
+      "attributes": {
+        "aufgabenart": "aufgabenart-1"
+      }
+    },
+    "t-3": {
+      "id": "t-3",
+      "title": "Task tamisium decretum cras",
+      "attributes": {
+        "aufgabenart": "aufgabenart-5"
+      }
+    },
+    "t-4": {
+      "id": "t-4",
+      "title": "Task denego una vivo",
+      "attributes": {
+        "aufgabenart": "aufgabenart-1"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+	"name": "opa-load-test-server",
+	"version": "1.0.0",
+	"type": "commonjs",
+	"dependencies": {
+		"@faker-js/faker": "^9.9.0",
+		"cors": "^2.8.5",
+		"express": "^5.1.0"
+	}
+}

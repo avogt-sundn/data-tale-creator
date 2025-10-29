@@ -1,0 +1,297 @@
+<div class="container">
+  <header>
+    <h1>OPA Test Suite</h1>
+    <div style="display: flex">
+      <div class="status-badge" [ngClass]="opaStatus">
+        <span class="status-dot"></span>
+        {{ statusMessage }}
+      </div>
+      <div class="status-badge" [ngClass]="backendStatus">
+        <span class="status-dot"></span>
+        Node Backend {{ backendStatus }}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="test-column">
+      <section class="generate-data">
+        <div class="split-view">
+          <div>
+            <h2>Datengenerierung</h2>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <label>Anzahl Teams</label>
+                <input type="number" [(ngModel)]="teamCount" />
+              </div>
+              <div class="input-wrapper">
+                <label>Sachbearbeiter (Min)</label>
+                <input type="number" [(ngModel)]="minMembers" />
+              </div>
+              <div class="input-wrapper">
+                <label>Sachbearbeiter (Max)</label>
+                <input type="number" [(ngModel)]="maxMembers" />
+              </div>
+              <div class="input-wrapper">
+                <label>Anzahl Aufgaben</label>
+                <input type="number" [(ngModel)]="taskCount" />
+              </div>
+            </div>
+            <div class="form-group">
+              <button (click)="generateData()" class="btn">Daten generieren</button>
+              <button (click)="loadDataIntoOPA()" [disabled]="!lastGeneratedData" class="btn">
+                In OPA laden
+              </button>
+            </div>
+          </div>
+          <div>
+            <p class="sub-title">In OPA geladene Daten</p>
+            <div class="form-group">
+              <div class="db-info">
+                {{ teamsInOpa | number }}
+                <span>Teams</span>
+              </div>
+              <div class="db-info">
+                {{ teamsInOpa * 10 | number }}
+                <span>Sachbearbeiter</span>
+              </div>
+              <div class="db-info">
+                {{ tasksInOpa | number }}
+                <span>Aufgaben</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Policy Verwaltung</h2>
+        <div class="split-view">
+          <div>
+            <p class="sub-title">In OPA geladene Policies</p>
+            <div class="form-group">
+              <div class="policy-buttons" style="margin-bottom: 0">
+                @for (policy of policies; track policy.id) {
+                <div class="policy-item">
+                  <button class="btn btn-policy" [title]="policy.raw">
+                    {{ policy.id }}
+                  </button>
+                  <button
+                    (click)="deletePolicyInOpa(policy.id)"
+                    class="btn-delete"
+                    title="Policy löschen"
+                  >
+                    ×
+                  </button>
+                </div>
+                } @empty {
+                <div class="info-box">⚠️ keine Policies geladen.</div>
+                }
+              </div>
+            </div>
+          </div>
+          <div>
+            <!-- Gespeicherte Policies -->
+
+            <p class="sub-title">Gespeicherte Policies (Filesystem)</p>
+            <div class="policy-buttons">
+              @for (policy of policyFiles; track $index) {
+              <div class="policy-item">
+                <button
+                  (click)="loadPolicyFile(policy)"
+                  class="btn btn-policy"
+                  title="Policy laden"
+                >
+                  {{ policy.split('.')[0] }}
+                </button>
+                <button
+                  (click)="deletePolicyFile(policy)"
+                  class="btn-delete"
+                  title="Policy löschen"
+                >
+                  ×
+                </button>
+              </div>
+              } @empty {
+              <div class="info-box">⚠️ keine Policyfiles im policies Ordner</div>
+              }
+            </div>
+            <div class="form-group" style="margin-top: 2rem">
+              <div class="input-wrapper">
+                <label>Policy ID</label>
+                @if (selectedPolicy) {
+                <input type="text" [(ngModel)]="selectedPolicy.id" />
+                }
+              </div>
+              <button (click)="savePolicy()" class="btn">Policy speichern</button>
+              <button
+                (click)="loadPolicyIntoOPA()"
+                [disabled]="!selectedPolicy?.raw?.trim()"
+                class="btn"
+              >
+                In OPA laden
+              </button>
+            </div>
+            @if (selectedPolicy) {
+            <div class="form-group">
+              <textarea
+                name="selectedPolicy"
+                [(ngModel)]="selectedPolicy.raw"
+                class="policy-editor"
+                rows="15"
+                placeholder="Rego Policy hier eingeben..."
+              ></textarea>
+            </div>
+            }
+          </div>
+        </div>
+      </section>
+      <section style="grid-column-end: span 2">
+        <h2>Policy Load Test</h2>
+
+        <div class="form-group">
+          <div class="input-wrapper">
+            <label>Policy Path</label>
+            <input type="text" [(ngModel)]="testPath" placeholder="example/allow" />
+          </div>
+          <div class="input-wrapper">
+            <label>Parallele Requests</label>
+            <input type="number" [(ngModel)]="parallelRequests" min="1" max="1000" />
+          </div>
+          <div class="input-wrapper">
+            <label>Iterationen</label>
+            <input type="number" [(ngModel)]="iterations" min="1" max="100" />
+          </div>
+          <button
+            (click)="executeLoadTest()"
+            [disabled]="isTestRunning || !lastGeneratedData || !selectedPolicy?.raw?.trim()"
+            class="btn"
+          >
+            {{ isTestRunning ? testStatusMessage : 'Apache Bench Test Starten' }}
+          </button>
+        </div>
+
+        @if (isTestRunning) {
+        <span class="loader"></span>
+        } @if (!lastGeneratedData) {
+        <div class="info-box">⚠️ Erst Daten generieren und in OPA laden!</div>
+        } @if (lastGeneratedData && !selectedPolicy?.raw?.trim()) {
+        <div class="info-box">⚠️ Erst eine Policy in OPA laden!</div>
+        } @if (!isTestRunning && testResults) {
+        <div class="test-results">
+          <h3>Test Ergebnisse</h3>
+
+          <div class="results-grid">
+            <div class="result-card">
+              <span class="result-label">Gesamt Requests</span>
+              <span class="result-value">{{ testResults.totalRequests }}</span>
+            </div>
+
+            <div class="result-card success">
+              <span class="result-label">HTTP Erfolgreich</span>
+              <span class="result-value"
+                >{{ testResults.successfulRequests }} ({{ testResults.successRate }}%)</span
+              >
+            </div>
+
+            <div class="result-card highlight">
+              <span class="result-label">Requests/Sekunde</span>
+              <span class="result-value">{{ testResults.requestsPerSecond }}</span>
+            </div>
+            @if (testResults.failedRequests > 0) {
+            <div class="result-card error">
+              <span class="result-label">HTTP Fehler</span>
+              <span class="result-value">{{ testResults.failedRequests }}</span>
+            </div>
+            }
+
+            <div class="result-card allowed">
+              <span class="result-label">✅ Allowed</span>
+              <span class="result-value"
+                >{{ testResults.allowedRequests }} ({{ testResults.allowRate }}%)</span
+              >
+            </div>
+
+            <div class="result-card denied">
+              <span class="result-label">🚫 Denied</span>
+              <span class="result-value"
+                >{{ testResults.deniedRequests }} ({{ testResults.denyRate }}%)</span
+              >
+            </div>
+            <div class="result-card">
+              <span class="result-label">Ø Response Time</span>
+              <span class="result-value">{{ testResults.avgResponseTime }}ms</span>
+            </div>
+
+            <div class="result-card">
+              <span class="result-label">Min / Max</span>
+              <span class="result-value"
+                >{{ testResults.minResponseTime }}ms / {{ testResults.maxResponseTime }}ms</span
+              >
+            </div>
+            <div class="result-card">
+              <span class="result-label">PERCENTILES</span>
+              <span class="result-value" style="font-size: 0.9rem; line-height: 1.4">
+                p50: {{ testResults.p50ResponseTime }}ms<br />
+                p80: {{ testResults.p80ResponseTime }}ms<br />
+                p95: {{ testResults.p95ResponseTime }}ms<br />
+                p99: {{ testResults.p99ResponseTime }}ms
+              </span>
+            </div>
+          </div>
+        </div>
+        }
+      </section>
+    </div>
+
+    <div class="sidebar">
+      <div>
+        <h2>Docker Container Stats</h2>
+        @for (stat of dockerStats; track stat.id) {
+        <div class="stats">
+          <div class="row title">
+            <span
+              >{{ stat.name }} <br /><small>{{ stat.id.substring(0, 20) }}</small>
+            </span>
+            <button
+              class="restart"
+              (click)="restartContainer(stat.id, stat.name)"
+              title="Container neustarten"
+            >
+              &#10226;
+            </button>
+          </div>
+          <div class="row">
+            <span>CPU:</span>
+            <span>{{ stat.cpu }}</span>
+          </div>
+          <div class="row">
+            <span>Memory:</span>
+            <span>{{ stat.memUsage }}</span>
+          </div>
+          <div class="row">
+            <span>Mem %:</span>
+            <span>{{ stat.memPerc }}</span>
+          </div>
+        </div>
+        } @empty {
+        <div class="row one-col">
+          <span>Keine Daten vorhanden.</span>
+        </div>
+        }
+        <h2>Logs</h2>
+        <div class="stats">
+          <div class="row one-col">
+            @for (log of statusLog; track $index) {
+            <div class="log-entry" [ngStyle]="{ borderBottom: $last ? '0' : '1px solid #c7c7c7' }">
+              {{ log }}
+            </div>
+            } @empty {
+            <div>keine logs</div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
