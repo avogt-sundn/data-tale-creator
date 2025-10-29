@@ -16,21 +16,36 @@ header {
   align-items: center;
   gap: 0.5rem;
   padding: 0.3rem 1rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  border-radius: 18px;
+  margin-left: 1rem;
 }
 .status-dot {
-  width: 0.6rem;
-  height: 0.6rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 50%;
 }
-.connected .status-dot {
-  background: #46b146;
+.connected {
+  background-color: #e8f5e9;
+  border-color: #4caf50;
+  color: #0f790f;
+  .status-dot {
+    background: #0f790f;
+  }
 }
-.disconnected .status-dot {
-  background: red;
+.disconnected {
+  background-color: #f8d1d1;
+  color: #b91010;
+  .status-dot {
+    background: #b91010;
+  }
 }
-.checking .status-dot {
-  background: yellow;
+.checking {
+  background-color: #fdfdcc;
+  color: yellow;
+  .status-dot {
+    background: yellow;
+  }
 }
 .input-wrapper {
   display: flex;
@@ -227,7 +242,32 @@ section {
   background: #e22320;
   border-color: #e22320;
 }
-
+.db-info {
+  width: 150px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background-color: white;
+  color: #2d59a1;
+  font-size: 1.7rem;
+  font-weight: 700;
+  border: 1px solid #ccc;
+  span {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #828282;
+    margin-top: 4px;
+  }
+}
+.sub-title {
+  color: #525f72;
+  font-size: 0.85rem;
+  margin-bottom: 0.8rem;
+}
 @media (min-width: 1280px) {
   .test-column {
     grid-template-columns: 1fr 1fr;
@@ -292,4 +332,68 @@ section {
   display: flex;
   justify-content: space-between;
   flex-direction: column;
+}
+
+.info-box {
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+.test-results {
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+.result-card {
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.result-card.success {
+  background: #e8f5e9;
+  border-color: #51d351;
+}
+
+.result-card.error {
+  background: #ffebee;
+  border-color: #ef5350;
+}
+
+.result-card.highlight {
+  background: #e3f2fd;
+  border-color: #2d59a1;
+}
+
+.result-label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.result-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #333;
+}
+.result-card.allowed {
+  background: #e8f5e9;
+  border-color: #4caf50;
+}
+.result-card.denied {
+  background: #fff3e0;
+  border-color: #ff9800;
 }

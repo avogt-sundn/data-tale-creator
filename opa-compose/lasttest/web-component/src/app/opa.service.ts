@@ -3,17 +3,18 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
+export const OPA_BASE = 'http://localhost:8181';
+export const API_BASE = 'http://localhost:3001';
+
 @Injectable({
   providedIn: 'root',
 })
 export class OpaService {
   private http = inject(HttpClient);
-  private opaBaseUrl = 'http://localhost:8181';
-  private apiBase = 'http://localhost:3001';
 
   ping(): Observable<{ success: boolean; message: string }> {
     return this.http
-      .get<any>(`${this.opaBaseUrl}/health`, {
+      .get<any>(`${OPA_BASE}/health`, {
         observe: 'response',
       })
       .pipe(
@@ -33,7 +34,7 @@ export class OpaService {
     policyContent: string,
     policyId: string
   ): Observable<{ success: boolean; message: string }> {
-    const url = `${this.opaBaseUrl}/v1/policies/${policyId}`;
+    const url = `${OPA_BASE}/v1/policies/${policyId}`;
 
     return this.http
       .put(url, policyContent, {
@@ -58,10 +59,10 @@ export class OpaService {
       );
   }
   getAllData(): Observable<any> {
-    return this.http.get(`${this.opaBaseUrl}/v1/data`);
+    return this.http.get(`${OPA_BASE}/v1/data`);
   }
   getDockerStats(): Observable<any> {
-    return this.http.get(`${this.apiBase}/docker/stats`).pipe(
+    return this.http.get(`${API_BASE}/docker/stats`).pipe(
       catchError((error: any) => {
         console.error('Docker stats failed:', error);
         return of({ success: false, stats: [] });
@@ -69,7 +70,7 @@ export class OpaService {
     );
   }
   deletePolicy(policyId: string): Observable<any> {
-    const url = `${this.opaBaseUrl}/v1/policies/${policyId}`;
+    const url = `${OPA_BASE}/v1/policies/${policyId}`;
     return this.http
       .delete(url, {
         observe: 'response',

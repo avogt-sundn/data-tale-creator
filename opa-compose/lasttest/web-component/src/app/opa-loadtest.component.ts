@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OpaService } from './opa.service';
+import { OPA_BASE, API_BASE, OpaService } from './opa.service';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
@@ -15,7 +15,6 @@ import { HttpClient } from '@angular/common/http';
 export class OpaLoadtestComponent implements OnInit {
   private opaService = inject(OpaService);
   private http = inject(HttpClient);
-  private readonly API_BASE = 'http://localhost:3001';
 
   backendStatus: 'connected' | 'disconnected' | 'checking' = 'checking';
   opaStatus: 'connected' | 'disconnected' | 'checking' = 'checking';
@@ -62,7 +61,7 @@ export class OpaLoadtestComponent implements OnInit {
   }
   checkBackendHealth() {
     this.backendStatus = 'checking';
-    this.http.get(`${this.API_BASE}/health`).subscribe({
+    this.http.get(`${API_BASE}/health`).subscribe({
       next: () => {
         this.backendStatus = 'connected';
       },
@@ -78,7 +77,7 @@ export class OpaLoadtestComponent implements OnInit {
     }
     this.addLog(`Starte Container ${containerName} neu...`);
 
-    this.http.post(`${this.API_BASE}/docker/restart/${containerId}`, {}).subscribe({
+    this.http.post(`${API_BASE}/docker/restart/${containerId}`, {}).subscribe({
       next: () => {
         this.addLog(`✓ Container ${containerName} neugestartet`);
         this.loadPoliciesFromOPA();
@@ -113,7 +112,7 @@ export class OpaLoadtestComponent implements OnInit {
     this.addLog('Generiere Daten...');
 
     this.http
-      .post<any>(`${this.API_BASE}/generate`, {
+      .post<any>(`${API_BASE}/generate`, {
         teamCount: this.teamCount,
         minMembers: this.minMembers,
         maxMembers: this.maxMembers,
@@ -126,7 +125,7 @@ export class OpaLoadtestComponent implements OnInit {
             const filename = 'data.json';
 
             this.http
-              .post(`${this.API_BASE}/data/save`, {
+              .post(`${API_BASE}/data/save`, {
                 filename: filename,
                 data: result.data,
               })
@@ -152,7 +151,7 @@ export class OpaLoadtestComponent implements OnInit {
     this.addLog('Lade Daten in OPA...');
 
     this.http
-      .post<any>(`${this.API_BASE}/opa/load-data`, {
+      .post<any>(`${API_BASE}/opa/load-data`, {
         data: this.lastGeneratedData,
       })
       .subscribe({
@@ -186,7 +185,7 @@ export class OpaLoadtestComponent implements OnInit {
     });
   }
   queryData() {
-    this.http.get<any>(`http://localhost:8181/${this.queryPath}`).subscribe({
+    this.http.get<any>(`${OPA_BASE}/${this.queryPath}`).subscribe({
       next: (data) => {
         this.queryResult = data.result;
       },
@@ -197,7 +196,7 @@ export class OpaLoadtestComponent implements OnInit {
     });
   }
   loadPoliciesFromOPA() {
-    this.http.get<any>(`http://localhost:8181/v1/policies`).subscribe({
+    this.http.get<any>(`${OPA_BASE}/v1/policies`).subscribe({
       next: (data) => {
         if (data.result) {
           this.policies = data.result;
@@ -209,7 +208,7 @@ export class OpaLoadtestComponent implements OnInit {
     });
   }
   getStoredPolicies() {
-    this.http.get(`${this.API_BASE}/policies`).subscribe({
+    this.http.get(`${API_BASE}/policies`).subscribe({
       next: (result: any) => {
         if (result.success) {
           this.policyFiles = result.files;
@@ -226,7 +225,7 @@ export class OpaLoadtestComponent implements OnInit {
   }
   loadPolicyFile(filename: string) {
     const id = filename.split('.')[0];
-    this.http.get<any>(`${this.API_BASE}/policy/load/${filename}`).subscribe({
+    this.http.get<any>(`${API_BASE}/policy/load/${filename}`).subscribe({
       next: (result) => {
         if (result.success) {
           this.selectedPolicy = { id, raw: result.content };
@@ -240,7 +239,7 @@ export class OpaLoadtestComponent implements OnInit {
     if (!confirm(`Policy '${filename}' wirklich löschen?`)) {
       return;
     }
-    this.http.delete(`${this.API_BASE}/policy/delete/${filename}`).subscribe({
+    this.http.delete(`${API_BASE}/policy/delete/${filename}`).subscribe({
       next: () => {
         this.addLog(`✓ Policyfile '${filename}' gelöscht`);
         this.getStoredPolicies();
@@ -255,7 +254,7 @@ export class OpaLoadtestComponent implements OnInit {
     }
     const filename = `${this.selectedPolicy.id}.rego`;
     this.http
-      .post<any>(`${this.API_BASE}/policy/save`, {
+      .post<any>(`${API_BASE}/policy/save`, {
         filename: filename,
         content: this.selectedPolicy.raw,
       })
@@ -367,21 +366,24 @@ export class OpaLoadtestComponent implements OnInit {
     return inputs;
   }
   executeLoadTest() {
-    if (!this.lastGeneratedData || !this.selectedPolicy?.raw.trim()) {
+    if (!this.lastGeneratedData || !this.policies) {
       return;
     }
+
     this.isTestRunning = true;
     this.testResults = null;
-    this.testStatusMessage = 'Apache Bench Load Test läuft...';
-    const testInputs = this.generateTestInputs(Math.min(this.parallelRequests, 100));
+    this.testStatusMessage = 'Apache Bench Test läuft...';
+
+    const testInputs = this.generateTestInputs(this.parallelRequests);
     if (testInputs.length === 0) {
       this.isTestRunning = false;
       return;
     }
+
     this.addLog(`Starte Apache Bench: ${this.parallelRequests} Requests...`);
 
     this.http
-      .post<any>(`${this.API_BASE}/opa/load-test-ab`, {
+      .post<any>(`${API_BASE}/opa/load-test-ab`, {
         path: this.testPath,
         inputs: testInputs,
         iterations: this.iterations,
@@ -390,10 +392,13 @@ export class OpaLoadtestComponent implements OnInit {
       })
       .subscribe({
         next: (response) => {
+          console.log('resp', response);
+
           if (response.success) {
             this.testResults = response.stats;
-            console.log(this.testResults);
-            this.addLog(`✓ Test abgeschlossen`);
+            this.addLog(
+              `✓ Test abgeschlossen: Erfolgsrate: ${response.stats.successRate}%, Gesamtdauer: ${response.stats.totalDuration}s, Durchschnitt: ${response.stats.avgResponseTime}ms`
+            );
           }
           this.isTestRunning = false;
           this.testStatusMessage = '';
