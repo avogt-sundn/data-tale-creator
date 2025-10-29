@@ -1,12 +1,13 @@
 #!/bin/bash
 
-EXAMPLE=example
+set -euo pipefail          # safety
+
+EXAMPLE=test-2
 PACKAGE_PATH=app/abac
-
 TMP_GENERATED_DATA=/tmp/generated
-
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if true; then
-    node generate.js --count=1 --numUsers=1000000 --pets=1000000 > $TMP_GENERATED_DATA
+    node $SCRIPT_DIR/generate.js --count=1 --numUsers=1000000 --pets=1000000 > $TMP_GENERATED_DATA
 
 
 fi
@@ -17,8 +18,8 @@ if docker ps -q -f name=opa | grep -q .; then
     echo "Container opa is already running"
     # Do nothing or perform actions
 else
-    echo "Starting container opa"
-    docker compose -f ../docker-compose.yml up -d
+    echo "Starting container opa from compose file at: "
+    docker compose -f $SCRIPT_DIR/../../opa-compose/docker-compose.yml up -d
 fi
 
 MAX_ATTEMPTS=10
@@ -53,7 +54,7 @@ else
 fi
 
 echo "Policies laden von attrbased-rules.rego unter dem Namen '$EXAMPLE' ..."
-curl >/dev/null 2>&1 -X PUT --data-binary @attrbased-rules.rego -H "Content-Type: text/plain" http://$host:8181/v1/policies/$EXAMPLE
+curl >/dev/null 2>&1 -X PUT --data-binary @$SCRIPT_DIR/attrbased-rules.rego -H "Content-Type: text/plain" http://$host:8181/v1/policies/$EXAMPLE
 
 
 echo "Daten laden von data.json"
@@ -62,7 +63,7 @@ curl -s -X PUT -H "Content-Type: application/json" --data-binary @$TMP_GENERATED
 echo "Regeln auswerten zu input.json"
 cat <<EOF > /tmp/v1-data-input.json
 {
-    "input": $(cat input.json)
+    "input": $(cat $SCRIPT_DIR/input.json)
 }
 EOF
 result=$(curl http://$host:8181/v1/data/$PACKAGE_PATH -s --data-binary @/tmp/v1-data-input.json -H 'Content-Type: application/json'|jq)
