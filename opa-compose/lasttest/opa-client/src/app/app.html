@@ -1,0 +1,608 @@
+<div class="h-screen flex flex-col overflow-hidden">
+  <header class="px-5 py-3 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" width="28" height="28" alt="" />
+        <h1 class="text-xl font-medium pt-1">OPA Test Suite</h1>
+      </div>
+      <div class="flex items-center gap-4 text-xs pt-1">
+        <button class="status-badge" [ngClass]="opaStatus" (click)="checkOpaConnection()">
+          <span class="status-dot" [ngClass]="opaStatus"></span>
+          {{ statusMessage }}
+        </button>
+        <button class="status-badge" [ngClass]="backendStatus" (click)="checkBackendHealth()">
+          <span class="status-dot" [ngClass]="backendStatus"></span>
+          Node Backend {{ backendStatus === 'connected' ? 'online' : 'offline' }}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden pt-1 mb-5">
+    <main class="flex-1 overflow-y-auto pl-5">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
+        <div class="xl:col-span-3 space-y-5">
+          <app-accordion title="Container Analytics" [isOpen]="true" class="grid-cols-3">
+            @if (chartData && dockerStats.length) {
+            <app-chart [data]="chartData" [title]="dockerStats[0].name"></app-chart>
+            }
+            <div class="flex justify-end items-center gap-2 mt-3">
+              <span class="text-xs">Aufzeichnungszeitraum in Min.</span>
+              <button
+                class="btn-policy"
+                [ngClass]="{ 'text-sm font-bold ': analyticsSpan === 3 }"
+                (click)="analyticsSpan = 3"
+              >
+                3
+              </button>
+              <button
+                class="btn-policy"
+                [ngClass]="{ 'text-sm font-bold': analyticsSpan === 5 }"
+                (click)="analyticsSpan = 5"
+              >
+                5
+              </button>
+              <button
+                class="btn-policy"
+                [ngClass]="{ 'text-sm font-bold': analyticsSpan === 10 }"
+                (click)="analyticsSpan = 10"
+              >
+                10
+              </button>
+              <button
+                class="btn-policy"
+                [ngClass]="{ 'text-sm font-bold': analyticsSpan === 15 }"
+                (click)="analyticsSpan = 15"
+              >
+                15
+              </button>
+            </div>
+          </app-accordion>
+        </div>
+        <div class="space-y-5">
+          <app-accordion
+            [title]="'OPA Datenbank'"
+            [subtitle]="`${teamsInOpa | number} | ${usersInOpa | number} | ${tasksInOpa | number}`"
+            [isOpen]="true"
+          >
+            <div class="grid grid-cols-3 gap-4 mb-5">
+              <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
+                <div class="text-xl font-bold text-blue-600">{{ teamsInOpa | number }}</div>
+                <div class="text-xs text-gray-600 mt-1">Teams</div>
+              </div>
+              <div
+                class="bg-white p-4 rounded-lg border border-gray-200 text-center"
+                title="Sachbearbeiter"
+              >
+                <div class="text-xl font-bold text-blue-600">{{ usersInOpa | number }}</div>
+                <div class="text-xs text-gray-600 mt-1">SB</div>
+              </div>
+              <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
+                <div class="text-xl font-bold text-blue-600">{{ tasksInOpa | number }}</div>
+                <div class="text-xs text-gray-600 mt-1">Aufgaben</div>
+              </div>
+            </div>
+            <app-accordion title="Datengenerierung" [isOpen]="false">
+              <div>
+                <h3 class="text-sm text-zinc-600 mb-1 italic">/generated/data.json</h3>
+                <div class="grid grid-cols-3 gap-3 mb-5">
+                  <div class="relative">
+                    <label class="input-label">Anzahl Teams</label>
+                    <input type="number" class="input-field" [(ngModel)]="teamCount" />
+                  </div>
+                  <div class="relative">
+                    <label class="input-label">Sachbearbeiter</label>
+                    <input type="number" class="input-field" [(ngModel)]="members" />
+                  </div>
+                  <div class="relative">
+                    <label class="input-label">Anzahl Aufgaben</label>
+                    <input type="number" class="input-field" [(ngModel)]="taskCount" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button (click)="generateData()" [disabled]="lockUI" class="btn">
+                    Daten generieren
+                  </button>
+                  <button
+                    (click)="loadDataIntoOPA()"
+                    [disabled]="
+                      !lastGeneratedData ||
+                      !this.lastGeneratedData.tasks ||
+                      !this.lastGeneratedData.teams ||
+                      lockUI ||
+                      isTestRunning
+                    "
+                    class="btn"
+                  >
+                    In OPA laden
+                  </button>
+                  <button
+                    (click)="queryOpaData()"
+                    [disabled]="lockUI"
+                    class="btn col-span-2"
+                    title="Alle Daten abrufen (Achtung: langsam bei großen Datenmengen)"
+                  >
+                    ⚠️ OPA Datenbank laden
+                  </button>
+                </div>
+              </div>
+            </app-accordion>
+          </app-accordion>
+          <app-accordion title="OPA DB Structure" [isOpen]="false" class="mb-5">
+            @if (dataStructure && typeof dataStructure === 'object') {
+            <div class="flex justify-end gap-1 items-end mb-2">
+              <!-- <span class="text-xs mr-1 border border-zinc-300 p-2 py-1 rounded">{{
+                treeviewDepth
+              }}</span> -->
+              <button
+                class="btn-policy text-base p-0 px-2 font-extrabold"
+                (click)="treeviewDepth = treeviewDepth > 0 ? treeviewDepth - 1 : 0"
+              >
+                ↓
+              </button>
+              <button
+                class="btn-policy text-base p-0 px-2 font-extrabold"
+                (click)="treeviewDepth = (treeviewDepth + 1) % 7"
+              >
+                ↑
+              </button>
+            </div>
+            <div class="bg-gray-800 min-h-0 overflow-y-auto max-h-[350px] p-4 rounded">
+              <ngx-json-viewer
+                [json]="dataStructure ?? {}"
+                [expanded]="true"
+                [depth]="treeviewDepth"
+              >
+              </ngx-json-viewer>
+            </div>
+            }
+          </app-accordion>
+          <app-accordion [title]="'OPA DB Queries'" [isOpen]="false">
+            <div class="space-y-4">
+              <div class="flex gap-2">
+                <div class="flex-1 relative">
+                  <label class="input-label">Query Path</label>
+                  <input
+                    type="text"
+                    class="input-field"
+                    [(ngModel)]="queryPath"
+                    (keydown.Enter)="queryData()"
+                  />
+                </div>
+                <button [disabled]="queryDataLock" (click)="queryData()" class="btn">
+                  Abfragen
+                </button>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-end mb-1">
+                  <label class="text-xs font-medium text-slate-600 block mr-2">INPUT</label>
+                  <div class="space-x-2">
+                    <button
+                      [disabled]="queryDataLock"
+                      (click)="generateInput('uid'); queryData()"
+                      class="btn-policy !my-1"
+                    >
+                      user
+                    </button>
+                    <button
+                      [disabled]="queryDataLock"
+                      (click)="generateInput('attr'); queryData()"
+                      class="btn-policy !my-1"
+                    >
+                      attribute
+                    </button>
+                    <button
+                      [disabled]="queryDataLock"
+                      (click)="generateInput('allow'); queryData()"
+                      class="btn-policy !my-1"
+                    >
+                      allow
+                    </button>
+                  </div>
+                </div>
+                <textarea [(ngModel)]="jsonInputString" class="editor max-h-[400px]"></textarea>
+              </div>
+              <div>
+                <div class="flex justify-between gap-1 items-end mb-2">
+                  <label class="text-xs font-medium text-slate-600 block mr-5 leading-none"
+                    >RESPONSE</label
+                  >
+                  <div class="flex justify-end gap-1 items-end">
+                    <!-- <span class="text-xs mr-1 border border-zinc-300 p-2 py-1 rounded">{{
+                      queryResultDepth
+                    }}</span> -->
+                    <button
+                      class="btn-policy text-base p-0 px-2 font-extrabold"
+                      (click)="queryResultDepth = queryResultDepth > 0 ? queryResultDepth - 1 : 0"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      class="btn-policy text-base p-0 px-2 font-extrabold"
+                      (click)="queryResultDepth = (queryResultDepth + 1) % 7"
+                    >
+                      ↑
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-gray-800 min-h-[350px] overflow-y-auto max-h-[350px] p-4 rounded">
+                  @if (queryResult && typeof queryResult === 'object') {
+                  <ngx-json-viewer
+                    [json]="queryResult ?? {}"
+                    [expanded]="true"
+                    [depth]="queryResultDepth"
+                  >
+                  </ngx-json-viewer>
+                  }
+                </div>
+              </div>
+            </div>
+          </app-accordion>
+        </div>
+
+        <div class="xl:col-span-2 space-y-5">
+          <app-accordion title="Policy Load Test" [isOpen]="true">
+            <div class="space-y-4">
+              <div class="flex flex-wrap gap-3">
+                <div class="relative flex-1">
+                  <label class="input-label">Policy Path</label>
+                  <input type="text" class="input-field" [(ngModel)]="policyPath" />
+                </div>
+                @if (benchTool === 'apache') {
+                <div class="relative">
+                  <label class="input-label">Parallele Requests</label>
+                  <input type="number" class="input-field" [(ngModel)]="parallelRequests" />
+                </div>
+                <div class="relative">
+                  <label class="input-label">Iterationen</label>
+                  <input type="number" max="2000" class="input-field" [(ngModel)]="iterations" />
+                </div>
+                } @if (benchTool === 'opa') { }
+                <div class="relative pr-2">
+                  <label class="input-label">Testing Tool</label>
+                  <select class="input-field" [(ngModel)]="benchTool">
+                    <option value="apache">Apache Bench</option>
+                    <option value="opa">OPA Bench</option>
+                  </select>
+                </div>
+                <button
+                  (click)="benchTool === 'apache' ? apacheBenchTest() : opaBenchmark()"
+                  [disabled]="isTestRunning || !lastGeneratedData || !policies || lockUI"
+                  class="btn"
+                >
+                  {{
+                    isTestRunning
+                      ? benchTool === 'opa'
+                        ? 'OPA Bench gestartet...'
+                        : 'Apache Bench gestartet...'
+                      : 'Test Starten'
+                  }}
+                </button>
+              </div>
+
+              @if (opaBenchResults) {
+              <div class="mt-5">
+                <h3 class="text-sm font-medium text-zinc-600 mb-3">OPA Bench Ergebnisse:</h3>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                  <div class="p-4 bg-white rounded-lg border border-gray-200">
+                    <div class="result-title">Operations/Sekunde</div>
+                    <div class="text-2xl font-bold text-blue-600">
+                      {{ opaBenchResults.opsPerSecond | number : '1.0-2' }}
+                    </div>
+                    <div class="text-xs text-zinc-500 mt-1">ops/sec</div>
+                  </div>
+
+                  <div class="p-4 bg-white rounded-lg border border-gray-200">
+                    <div class="result-title">Zeit/Operation</div>
+                    <div class="text-2xl font-bold text-green-600">
+                      {{ opaBenchResults.nsPerOp | number : '1.0-0' }}
+                    </div>
+                    <div class="text-xs text-zinc-500 mt-1">ns/op</div>
+                  </div>
+
+                  <div class="p-4 bg-white rounded-lg border border-gray-200">
+                    <div class="result-title">Memory/Operation</div>
+                    <div class="text-2xl font-bold text-purple-600">
+                      {{ opaBenchResults.bytesPerOp | number : '1.0-0' }}
+                    </div>
+                    <div class="text-xs text-zinc-500 mt-1">Bytes/op</div>
+                  </div>
+
+                  <div class="p-4 bg-white rounded-lg border border-gray-200">
+                    <div class="result-title">Allocations/Operation</div>
+                    <div class="text-2xl font-bold text-orange-600">
+                      {{ opaBenchResults.allocsPerOp | number : '1.0-0' }}
+                    </div>
+                    <div class="text-xs text-zinc-500 mt-1">allocs/op</div>
+                  </div>
+                </div>
+
+                @if (opaBenchResults.metrics) {
+                <div class="p-5 bg-white rounded border border-zinc-200">
+                  <h4 class="text-sm font-medium text-zinc-700 mb-1">Detaillierte Metriken:</h4>
+                  <div class="text-xs grid grid-cols-2 gap-x-5">
+                    @for (m of opaBenchResults.metrics; track $index) {
+                    <div class="flex justify-between items-center pt-3">
+                      <span class="text-zinc-600">{{ m[0] }}:</span>
+                      <span class="font-semibold">
+                        {{ m[1] | number : '1.0-0' }}
+                      </span>
+                    </div>
+                    }
+                  </div>
+                </div>
+                }
+              </div>
+              } @if (!isTestRunning && apacheBenchtResults) {
+              <div class="mt-5">
+                <h3 class="text-sm font-medium text-zinc-600 mb-3">Apache Bench Ergebnisse:</h3>
+                <div class="grid grid-cols-3 2xl:grid-cols-5 gap-3">
+                  <div class="p-3 rounded border border-gray-200 bg-white">
+                    <div class="result-title">Gesamt Requests</div>
+                    <div class="text-xl font-bold text-zinc-500">
+                      {{ apacheBenchtResults.totalRequests | number : '1.0-2' }}
+                    </div>
+                  </div>
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">HTTP Erfolgreich</div>
+                    <div class="flex items-center text-xl font-bold text-green-600">
+                      {{ apacheBenchtResults.successRate | number : '1.0-2' }}%
+                      <span class="text-xs ml-1"
+                        >({{ apacheBenchtResults.successfulRequests | number : '1.0-2' }})</span
+                      >
+                    </div>
+                  </div>
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">Ø Response Time</div>
+                    <div class="text-xl font-bold text-blue-600">
+                      {{ apacheBenchtResults.avgResponseTime }} ms
+                    </div>
+                  </div>
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">Min / Max</div>
+                    <div class="text-xl font-bold text-violet-600">
+                      {{ apacheBenchtResults.minResponseTime }}ms /
+                      {{ apacheBenchtResults.maxResponseTime }}ms
+                    </div>
+                  </div>
+
+                  @if (apacheBenchtResults.failedRequests > 0) {
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">HTTP Fehler</div>
+                    <div class="text-xl font-bold text-red-600">
+                      {{ apacheBenchtResults.failedRequests | number : '1.0-2' }}
+                    </div>
+                  </div>
+                  }
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">Requests/Sekunde</div>
+                    <div class="text-xl font-bold text-zinc-500">
+                      {{ apacheBenchtResults.requestsPerSecond | number : '1.0-0' }}
+                    </div>
+                  </div>
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">Allowed</div>
+                    <div class="flex text-xl items-center font-bold text-green-600">
+                      {{ apacheBenchtResults.allowRate | number : '1.0-0' }}%
+                      <span class="text-xs ml-1"
+                        >({{ apacheBenchtResults.allowedRequests | number : '1.0-2' }})</span
+                      >
+                    </div>
+                  </div>
+                  <div class="p-4 rounded border border-gray-200 bg-white">
+                    <div class="result-title">Denied</div>
+                    <div class="flex text-xl items-center font-bold text-red-600">
+                      {{ apacheBenchtResults.denyRate | number : '1.0-0' }}%
+                      <span class="text-sm ml-1"
+                        >({{ apacheBenchtResults.deniedRequests | number : '1.0-2' }})</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    class="p-4 rounded border border-gray-200 col-span-2 2xl:col-span-3 bg-white"
+                  >
+                    <div class="result-title">Percentiles</div>
+                    <div class="flex justify-between text-xs">
+                      <div>
+                        <div class="text-lg font-bold">
+                          {{ apacheBenchtResults.p50ResponseTime | number : '1.0-2' }}ms
+                        </div>
+                        <div class="text-zinc-500">p50</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold">
+                          {{ apacheBenchtResults.p66ResponseTime | number : '1.0-2' }}ms
+                        </div>
+                        <div class="text-zinc-500">p66</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold">
+                          {{ apacheBenchtResults.p80ResponseTime | number : '1.0-2' }}ms
+                        </div>
+                        <div class="text-zinc-500">p80</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold">
+                          {{ apacheBenchtResults.p95ResponseTime | number : '1.0-2' }}ms
+                        </div>
+                        <div class="text-zinc-500">p95</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold">
+                          {{ apacheBenchtResults.p99ResponseTime | number : '1.0-2' }}ms
+                        </div>
+                        <div class="text-zinc-500">p99</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              }
+            </div>
+          </app-accordion>
+          <app-accordion [title]="'Policy Management'" [subtitle]="policySubtitle" [isOpen]="false">
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-sm font-medium text-zinc-600 mb-2">in OPA geladene Policies</h3>
+                <div class="flex flex-wrap gap-2">
+                  @for (policy of policies; track policy.id) {
+                  <button
+                    (click)="editPolicy(policy.id)"
+                    class="btn-policy"
+                    title="OPA Policy editieren"
+                  >
+                    {{ policy.id }}
+                  </button>
+                  } @empty {
+                  <span class="text-sm text-slate-600">⚠️ keine Policies geladen!</span>
+                  }
+                </div>
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-zinc-600 mb-2">
+                  gespeicherte Policies <small>/policies/...</small>
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                  @for (file of policyFiles; track file) {
+                  <button
+                    (click)="editPolicy(file)"
+                    class="btn-policy"
+                    title="Policy Datei editieren"
+                  >
+                    {{ file }}
+                  </button>
+                  } @empty {
+                  <span class="text-sm text-slate-600">⚠️ keine Policies gespeichert!</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <app-accordion [title]="'Policy Editor'" [isOpen]="true">
+                <div class="space-y-3">
+                  <!-- <p class="text-sm text-slate-500">Policy "{{ policyId }}" editieren</p> -->
+                  <div class="flex gap-2 flex-wrap">
+                    <div class="flex-1 relative">
+                      <label class="input-label">Policy ID</label>
+                      <input
+                        type="text"
+                        class="input-field"
+                        [(ngModel)]="policyId"
+                        (input)="checkPolicies()"
+                      />
+                    </div>
+                    <button
+                      [disabled]="!policyId || lockUI || !editorContent"
+                      (click)="savePolicy()"
+                      class="btn"
+                    >
+                      Speichern
+                    </button>
+                    <button
+                      [disabled]="!policyId || !foundInFS || lockUI"
+                      (click)="deletePolicyFile(policyId)"
+                      class="btn hover:not-disabled:!bg-red-600 not-disabled:!bg-gray-500"
+                    >
+                      Löschen
+                    </button>
+                    <button
+                      [disabled]="!policyId || lockUI || !editorContent"
+                      (click)="loadPolicyIntoOPA()"
+                      class="btn"
+                    >
+                      in OPA laden
+                    </button>
+                    <button
+                      [disabled]="!policyId || !foundInOPA || lockUI"
+                      (click)="deletePolicyInOpa(policyId)"
+                      class="btn hover:not-disabled:!bg-red-600 not-disabled:!bg-gray-500"
+                    >
+                      aus OPA löschen
+                    </button>
+                  </div>
+                  <textarea [(ngModel)]="editorContent" class="editor"></textarea>
+                </div>
+              </app-accordion>
+            </div>
+          </app-accordion>
+        </div>
+      </div>
+    </main>
+
+    <aside class="w-80 flex flex-col overflow-hidden px-5">
+      <div class="space-y-4 flex-shrink-0">
+        @for (stat of dockerStats; track stat.id) {
+        <div class="p-4 py-3 bg-zinc-50 border border-gray-300 rounded-lg">
+          <div
+            class="flex border-b border-zinc-300 items-end justify-between mb-2 pb-2 border-b border-zinc-300"
+          >
+            <div class="">
+              <div class="text-[15px] mb-1 text-blue-800 font-semibold">{{ stat.name }}</div>
+              <div
+                class="leading-none text-xs text-zic-700 overflow-hidden text-ellipsis w-[200px] whitespace-nowrap"
+              >
+                {{ stat.id }}
+              </div>
+            </div>
+            <button
+              (click)="restartContainer(stat.id, stat.name)"
+              [disabled]="lockUI"
+              class="px-3 py-1 pb-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 text-2xl leading-6 disabled:!cursor-not-allowed"
+              title="Container neustarten"
+            >
+              ↺
+            </button>
+          </div>
+          <div class="text-xs font-medium text-zinc-700 space-y-1">
+            <div class="flex justify-between items-center">
+              <span>CPU:</span>
+              <span class="text-sm font-semibold">{{ stat.cpu }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Memory:</span>
+              <span class="text-sm font-semibold">{{ stat.memUsage }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Mem %:</span>
+              <span class="text-sm font-semibold">{{ stat.memPerc }}</span>
+            </div>
+          </div>
+        </div>
+
+        }
+      </div>
+      <div
+        class="flex-1 bg-zinc-50 rounded-lg border border-gray-300 mt-5 flex flex-col overflow-hidden"
+      >
+        <div class="border-b border-gray-200 flex-shrink-0">
+          <button
+            (click)="statusLog = []"
+            class="w-full bg-gray-200 hover:bg-gray-300 p-1 font-extrabold text-gray-500 text-3xl text-center leading-none"
+            title="Logs löschen"
+          >
+            ×
+          </button>
+        </div>
+        <div class="flex-1 p-4 overflow-y-auto text-xs text-zinc-700">
+          @for (log of statusLog; track $index) {
+          <div class="py-1 break-words" [class.border-b]="!$last" [class.border-zinc-300]="!$last">
+            <span class="font-semibold">{{ log.split(' -')[0] }}</span
+            >: {{ log.split('-')[1] }}
+          </div>
+          } @empty {
+          <div class="text-sm text-center py-4">⚠️ keine Logeinträge</div>
+          }
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Loading Spinner -->
+<!-- @if (lockUI) {
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="loader"></div>
+</div>
+} -->

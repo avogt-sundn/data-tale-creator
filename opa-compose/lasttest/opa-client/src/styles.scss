@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+@layer base {
+  html,
+  body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+  * {
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  h1 {
+    font-family: 'Roboto Condensed', sans-serif !important;
+    font-size: 1.1rem;
+    @apply text-gray-800;
+  }
+  h2 {
+    font-size: 1rem;
+    @apply text-gray-800;
+  }
+  button {
+    cursor: pointer;
+  }
+  main,
+  textarea {
+    scrollbar-color: #e4e4e7 #ffffff;
+    scrollbar-width: thin;
+  }
+}
+
+@layer components {
+  .status-badge {
+    @apply flex items-center p-1 px-3 gap-2 rounded-full text-xs;
+  }
+  .status-badge.connected {
+    @apply border-green-400 text-green-800;
+  }
+  .status-badge.disconnected {
+    @apply border-red-400 text-red-800;
+  }
+  .status-badge.checking {
+    @apply border-amber-400 text-amber-800;
+  }
+  .status-dot {
+    @apply w-[.5rem] h-[.5rem] rounded-full;
+  }
+  .status-dot.connected {
+    @apply bg-green-600;
+  }
+  .status-dot.disconnected {
+    @apply bg-red-600;
+  }
+  .status-dot.checking {
+    @apply bg-amber-600;
+  }
+
+  .editor {
+    @apply p-4 w-full rounded font-['Courier_New',monospace] text-xs
+         bg-gray-800 text-slate-100 max-h-[1200px];
+    field-sizing: content;
+    resize: none;
+  }
+  .input-field {
+    @apply text-sm w-full p-3 pb-1 pt-7 border border-gray-400 bg-white rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none;
+  }
+  .input-label {
+    @apply absolute left-[12px] top-[7px] text-xs;
+  }
+  .btn {
+    @apply p-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm disabled:opacity-50 disabled:text-gray-950 disabled:bg-gray-200 disabled:!cursor-not-allowed disabled:text-gray-400;
+  }
+  .btn-policy {
+    @apply p-2 py-1 text-slate-950 bg-slate-200 hover:bg-slate-300 rounded text-xs border border-slate-300;
+  }
+  .result-title {
+    @apply text-xs text-zinc-600 mb-2 uppercase;
+  }
+}
+:root {
+  --ngx-json-font-family: 'Courier New', monospace;
+  --ngx-json-font-size: 12px;
+
+  --ngx-json-bg: #1e1e1e;
+  --ngx-json-color: #dcdcdc;
+
+  --ngx-json-key: #9cdcfe;
+  --ngx-json-string: #dca38d;
+  --ngx-json-number: #b5cea8;
+  --ngx-json-boolean: #8ff4e8;
+  --ngx-json-null: #6ba2ce;
+  --ngx-json-separator: #808080;
+  --ngx-json-expandable: #c5c5c5;
+
+  --ngx-json-hover-bg: #2a2a2a;
+  --ngx-json-truncated: #eace94;
+  --ngx-json-border: #333;
+  --ngx-json-indent: 8px;
+}
