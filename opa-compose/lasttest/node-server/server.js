@@ -11,13 +11,14 @@ const { exec } = require('child_process');
 const util = require('util');
 
 const execPromise = util.promisify(exec);
-const maxPoilicies = 4;
 
 app.use(cors());
 app.use(express.json({ limit: '500mb' }));
 
 const POLICIES_DIR = path.join(__dirname, '../policies');
 fs.mkdir(POLICIES_DIR, { recursive: true });
+
+const OPA_BASE = 'http://localhost:8181';
 
 app.listen(PORT, () => {
 	console.log(`Server läuft auf http://localhost:${PORT}`);
@@ -51,8 +52,8 @@ app.get('/docker/stats', async (req, res) => {
 });
 app.post('/generate', async (req, res) => {
 	try {
-		const { teamCount = 5, minMembers = 8, maxMembers = 12, taskCount = 5 } = req.body;
-		const generated = generateTestData(teamCount, minMembers, maxMembers, taskCount);
+		const { teamCount = 5, members = 10, taskCount = 5 } = req.body;
+		const generated = generateTestData(teamCount, members, taskCount);
 		res.json({ success: true, data: generated });
 	} catch (error) {
 		console.error('❌ Generate Data failed:', error.message);
@@ -86,7 +87,7 @@ app.post('/opa/load-data', async (req, res) => {
 		console.log(`📦 Lade ${(Buffer.byteLength(jsonData) / 1024 / 1024).toFixed(2)} MB in OPA...`);
 		await fs.writeFile(tempFile, jsonData);
 		const { stdout, stderr } = await execPromise(
-			`curl -X PUT http://localhost:8181/v1/data -H "Content-Type: application/json" -d @${tempFile} -w "%{http_code}" -s -o /dev/null`
+			`curl -X PUT ${OPA_BASE}/v1/data -H "Content-Type: application/json" -d @${tempFile} -w "%{http_code}" -s -o /dev/null`
 		);
 		const statusCode = parseInt(stdout.trim());
 		await fs.unlink(tempFile);
@@ -102,23 +103,21 @@ app.post('/opa/load-data', async (req, res) => {
 		res.status(500).json({ success: false, error: error.message });
 	}
 });
-function generateTestData(teamCount, minMembers, maxMembers, taskCount) {
-	const aufgabenarten = ['aufgabenart-1', 'aufgabenart-2', 'aufgabenart-3', 'aufgabenart-4', 'aufgabenart-5'];
+function generateTestData(teamCount, memberCount, taskCount) {
 	const teams = {};
-	for (let i = 0; i < teamCount; i++) {
-		const memberCount = Math.floor(Math.random() * (maxMembers - minMembers)) + minMembers;
+	for (let i = 1; i <= teamCount; i++) {
 		const members = {};
 
-		for (let j = 0; j < memberCount; j++) {
-			const userId = `u-${j}`;
+		for (let j = 1; j <= memberCount; j++) {
+			const userId = `user-${i}-${j}`;
 			members[userId] = {
 				id: userId,
 				name: `${faker.person.firstName()} ${faker.person.lastName()}`,
 				email: faker.internet.email(),
 				attributes: {
-					aufgabenart: aufgabenarten[Math.floor(Math.random() * aufgabenarten.length)],
+					aufgabenart: 'aufgabenart-' + Math.floor(Math.random() * Math.max(10, Math.min(50, taskCount / 10))),
 				},
-				role: j === 0 ? 'HSB' : 'SB',
+				role: j === 1 ? 'HSB' : 'SB',
 			};
 		}
 		const teamId = `team-${i}`;
@@ -129,13 +128,13 @@ function generateTestData(teamCount, minMembers, maxMembers, taskCount) {
 		};
 	}
 	const tasks = {};
-	for (let i = 0; i < taskCount; i++) {
-		const taskId = `t-${i}`;
+	for (let i = 1; i <= taskCount; i++) {
+		const taskId = `task-${i}`;
 		tasks[taskId] = {
 			id: taskId,
 			title: `Task ${faker.lorem.words(3)}`,
 			attributes: {
-				aufgabenart: aufgabenarten[Math.floor(Math.random() * aufgabenarten.length)],
+				aufgabenart: 'aufgabenart-' + Math.floor(Math.random() * Math.max(10, Math.min(50, taskCount / 10))),
 			},
 		};
 	}
@@ -224,7 +223,7 @@ app.post('/opa/load-test-ab', async (req, res) => {
 					`ab -n ${parallelRequests} -c ${Math.min(
 						concurrency,
 						parallelRequests
-					)} -p ${requestFile} -T application/json http://localhost:8181/v1/data/${policyPath}`
+					)} -p ${requestFile} -T application/json ${OPA_BASE}/v1/data/${policyPath}`
 				);
 
 				const iterationStats = parseApacheBenchOutput(stdout);
@@ -249,7 +248,9 @@ app.post('/opa/load-test-ab', async (req, res) => {
 		const minResponseTime = Math.min(...allResults.map((r) => r.minResponseTime));
 		const maxResponseTime = Math.max(...allResults.map((r) => r.maxResponseTime));
 		const avgP50 = (allResults.reduce((sum, r) => sum + r.p50ResponseTime, 0) / iterations).toFixed(2);
+		const avgP66 = (allResults.reduce((sum, r) => sum + r.p66ResponseTime, 0) / iterations).toFixed(2);
 		const avgP80 = (allResults.reduce((sum, r) => sum + r.p80ResponseTime, 0) / iterations).toFixed(2);
+		const avgP90 = (allResults.reduce((sum, r) => sum + r.p90ResponseTime, 0) / iterations).toFixed(2);
 		const avgP95 = (allResults.reduce((sum, r) => sum + r.p95ResponseTime, 0) / iterations).toFixed(2);
 		const avgP99 = (allResults.reduce((sum, r) => sum + r.p99ResponseTime, 0) / iterations).toFixed(2);
 
@@ -272,7 +273,9 @@ app.post('/opa/load-test-ab', async (req, res) => {
 			minResponseTime: minResponseTime,
 			maxResponseTime: maxResponseTime,
 			p50ResponseTime: avgP50,
+			p66ResponseTime: avgP66,
 			p80ResponseTime: avgP80,
+			p90ResponseTime: avgP90,
 			p95ResponseTime: avgP95,
 			p99ResponseTime: avgP99,
 			requestsPerSecond: (totalRequests / totalDuration).toFixed(2),
@@ -284,7 +287,7 @@ app.post('/opa/load-test-ab', async (req, res) => {
 			iterations: iterations,
 		};
 
-		console.log('✓ Load Test Complete:', finalStats);
+		// console.log('✓ Load Test Complete:', finalStats);
 		res.json({ success: true, stats: finalStats });
 	} catch (error) {
 		console.error('❌ Load Test Error:', error);
@@ -317,37 +320,125 @@ function parseApacheBenchOutput(output) {
 		minResponseTime: percentiles.p0 || 0,
 		maxResponseTime: percentiles.p100 || 0,
 		p50ResponseTime: percentiles.p50 || 0,
+		p66ResponseTime: percentiles.p66 || 0,
 		p80ResponseTime: percentiles.p80 || 0,
+		p90ResponseTime: percentiles.p90 || 0,
 		p95ResponseTime: percentiles.p95 || 0,
 		p99ResponseTime: percentiles.p99 || 0,
 		requestsPerSecond: requestsPerSec.toFixed(2),
 	};
 }
+
 async function getSampleResults(policyPath, inputs) {
 	const results = [];
-	for (const testInput of inputs) {
-		const tempFile = path.join(__dirname, `temp-sample-${Date.now()}-${Math.random().toString(36).substring(7)}.json`);
+	const start = Date.now();
+	for (let i = 0; i < inputs.length; i++) {
 		try {
-			await fs.writeFile(tempFile, JSON.stringify(testInput));
-			const { stdout } = await execPromise(
-				`curl -X POST http://localhost:8181/v1/data/${policyPath} -H "Content-Type: application/json" -d @${tempFile} -s`
-			);
-			await fs.unlink(tempFile);
-			const opaResult = JSON.parse(stdout);
+			const response = await fetch(`${OPA_BASE}/v1/data/${policyPath}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(inputs[i]),
+			});
+			if (!response.ok) continue;
+			const opaResult = await response.json();
+
 			let allowed = null;
 
-			if (opaResult.result && typeof opaResult.result === 'object') {
-				allowed = opaResult.result.allow;
-			} else if (typeof opaResult.result === 'boolean') {
+			if (typeof opaResult.result === 'boolean') {
 				allowed = opaResult.result;
+			} else if (opaResult.result && typeof opaResult.result === 'object') {
+				// console.log('opaResult', opaResult);
+				allowed = opaResult.result.allow;
 			}
 
 			results.push({ allowed });
-		} catch (error) {
-			try {
-				await fs.unlink(tempFile);
-			} catch {}
-		}
+		} catch (error) {}
+	}
+	console.log('Sampling Time', (Date.now() - start) / 1000);
+	return results;
+}
+app.post('/opa/benchmark', async (req, res) => {
+	let { policyPath, input, e2e, mem } = req.body;
+
+	policyPath = policyPath.replace(/^v1\.data\./, '');
+
+	try {
+		const inputFile = path.join(__dirname, '../temp', `bench-input-${Date.now()}.json`);
+		await fs.mkdir(path.dirname(inputFile), { recursive: true });
+		await fs.writeFile(inputFile, JSON.stringify(input));
+
+		const policyDir = path.join(__dirname, '../policies');
+		const benchCommand = `opa bench -d "${policyDir}" -i "${inputFile}" "data.${policyPath}" ${e2e} ${mem} --format json`;
+		console.log('Command:', benchCommand);
+
+		exec(
+			benchCommand,
+			{
+				timeout: 120000,
+				maxBuffer: 50 * 1024 * 1024,
+			},
+			async (error, stdout, stderr) => {
+				try {
+					await fs.unlink(inputFile);
+				} catch (e) {
+					console.error('Cleanup error:', e);
+				}
+
+				if (error) {
+					console.error('Benchmark error:', error);
+					return res.json({
+						success: false,
+						message: `Benchmark failed: ${error.message}`,
+						stderr: stderr,
+					});
+				}
+				let parsed;
+				try {
+					const jsonOutput = JSON.parse(stdout);
+					parsed = parseBenchOutput(jsonOutput);
+				} catch (e) {
+					console.error('JSON Parse error:', e);
+				}
+
+				res.json({
+					success: true,
+					results: parsed,
+					rawOutput: stdout,
+				});
+			}
+		);
+	} catch (error) {
+		res.json({
+			success: false,
+			message: `Error: ${error.message}`,
+		});
+	}
+});
+
+function parseBenchOutput(jsonData) {
+	const N = jsonData.N || 0;
+	const T = jsonData.T || 0;
+	const MemBytes = jsonData.MemBytes || 0;
+	const MemAllocs = jsonData.MemAllocs || 0;
+	const nsPerOp = N > 0 ? T / N : 0;
+	const bytesPerOp = N > 0 ? MemBytes / N : 0;
+	const allocsPerOp = N > 0 ? MemAllocs / N : 0;
+	const opsPerSecond = nsPerOp > 0 ? Math.round(1000000000 / nsPerOp) : 0;
+
+	const results = {
+		nsPerOp: nsPerOp,
+		bytesPerOp: bytesPerOp,
+		allocsPerOp: allocsPerOp,
+		opsPerSecond: opsPerSecond,
+		iterations: N,
+		totalTimeNs: T,
+		totalMemBytes: MemBytes,
+		totalMemAllocs: MemAllocs,
+		metrics: [],
+	};
+
+	for (const [key, value] of Object.entries(jsonData.Extra || {})) {
+		results.metrics.push([key, value]);
 	}
 
 	return results;

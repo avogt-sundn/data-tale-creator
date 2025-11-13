@@ -11,4 +11,4 @@ EXPOSE 8181
 
 
 # Command to run OPA with the policies
-CMD ["run", "--server", "--addr=0.0.0.0:8181","--log-level=debug","--log-format=text"]
+CMD ["run", "--server", "--addr=0.0.0.0:8181", "--log-level=debug", "--log-format=text", "--set=server.max_body_size=8589934592"]

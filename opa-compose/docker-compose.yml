@@ -1,18 +1,18 @@
 networks:
-  default:
-    name: docker-default-network
-    external: true
+    default:
+        name: docker-default-network
+        external: true
 
 services:
-  opa:
-   build: ./opa # Dockerfile local dir
-   hostname: opa
-   mem_limit: 5g
-   mem_reservation: 20m
+    opa:
+        build: ./opa # Dockerfile local dir
+        hostname: opa
+        mem_limit: 8g
+        mem_reservation: 20m
 
-  cors:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    ports:
-      - "8181:80"
+    cors:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        ports:
+            - '8181:80'
